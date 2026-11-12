@@ -8,17 +8,23 @@
     <group
         android:pivotX="256"
         android:pivotY="256"
-        android:scaleX="0.86"
-        android:scaleY="0.86">
-        <path
-            android:fillColor="#000000"
-            android:pathData="M132,318 L104,424 L206,378 Z" />
-        <path
-            android:pathData="M388,236 a132,132 0 1,0 -264,0 a132,132 0 1,0 264,0"
-            android:strokeColor="#000000"
-            android:strokeWidth="52" />
-        <path
-            android:fillColor="#000000"
-            android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+        android:scaleX="0.72"
+        android:scaleY="0.72">
+        <!-- Moves the mark so its visual center (ring, dot and tail weighted by area, at
+             248.8, 245.1) sits on the canvas center. -->
+        <group
+            android:translateX="7"
+            android:translateY="11">
+            <path
+                android:fillColor="#000000"
+                android:pathData="M132,318 L104,424 L206,378 Z" />
+            <path
+                android:pathData="M388,236 a132,132 0 1,0 -264,0 a132,132 0 1,0 264,0"
+                android:strokeColor="#000000"
+                android:strokeWidth="52" />
+            <path
+                android:fillColor="#000000"
+                android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+        </group>
     </group>
 </vector>

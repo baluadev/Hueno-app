@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Hueno mark: an aiming ring that is also a speech bubble. Scaled to sit inside the
-     adaptive-icon safe zone. -->
+<!-- The Hueno mark: an aiming ring that is also a speech bubble. Centered on its visual weight
+     and scaled to 0.72 so it keeps the same margin inside the launcher mask as other icons; at 0.86
+     it nearly touched the top of the mask and looked pushed up and to the left. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -9,29 +10,35 @@
     <group
         android:pivotX="256"
         android:pivotY="256"
-        android:scaleX="0.86"
-        android:scaleY="0.86">
-        <path
-            android:fillColor="#F5B301"
-            android:pathData="M132,318 L104,424 L206,378 Z" />
-        <path
-            android:pathData="M256,104 A132,132 0 0 1 388,236"
-            android:strokeColor="#3D6BF2"
-            android:strokeWidth="52" />
-        <path
-            android:pathData="M388,236 A132,132 0 0 1 256,368"
-            android:strokeColor="#1DB8A6"
-            android:strokeWidth="52" />
-        <path
-            android:pathData="M256,368 A132,132 0 0 1 124,236"
-            android:strokeColor="#F5B301"
-            android:strokeWidth="52" />
-        <path
-            android:pathData="M124,236 A132,132 0 0 1 256,104"
-            android:strokeColor="#F2603D"
-            android:strokeWidth="52" />
-        <path
-            android:fillColor="#F6F4EF"
-            android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+        android:scaleX="0.72"
+        android:scaleY="0.72">
+        <!-- Moves the mark so its visual center (ring, dot and tail weighted by area, at
+             248.8, 245.1) sits on the canvas center. -->
+        <group
+            android:translateX="7"
+            android:translateY="11">
+            <path
+                android:fillColor="#F5B301"
+                android:pathData="M132,318 L104,424 L206,378 Z" />
+            <path
+                android:pathData="M256,104 A132,132 0 0 1 388,236"
+                android:strokeColor="#3D6BF2"
+                android:strokeWidth="52" />
+            <path
+                android:pathData="M388,236 A132,132 0 0 1 256,368"
+                android:strokeColor="#1DB8A6"
+                android:strokeWidth="52" />
+            <path
+                android:pathData="M256,368 A132,132 0 0 1 124,236"
+                android:strokeColor="#F5B301"
+                android:strokeWidth="52" />
+            <path
+                android:pathData="M124,236 A132,132 0 0 1 256,104"
+                android:strokeColor="#F2603D"
+                android:strokeWidth="52" />
+            <path
+                android:fillColor="#F6F4EF"
+                android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+        </group>
     </group>
 </vector>

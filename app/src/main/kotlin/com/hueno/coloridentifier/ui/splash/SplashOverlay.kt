@@ -66,6 +66,14 @@ private const val REVEAL = 0.70f
 private const val MARK_SCALE = 0.70f
 
 /**
+ * Shift of the mark in the 512-unit viewport that puts its visual center (ring, dot and tail
+ * weighted by area) on the canvas center. Same values as the translate groups in ic_splash.xml,
+ * ic_launcher_foreground.xml and hueno_mark.xml.
+ */
+private const val MARK_DX = 7f
+private const val MARK_DY = 11f
+
+/**
  * A short animated intro drawn over the app while it starts.
  *
  * The story is the product's: the aiming ring spins and opens, the center cycles through colors
@@ -155,13 +163,15 @@ private fun span(t: Float, from: Float, to: Float): Float = ((t - from) / (to - 
 private fun smooth(x: Float): Float = x * x * (3f - 2f * x)
 
 /**
- * Draws the mark at intro progress [t]. The geometry mirrors ic_splash.xml: a 512-unit viewport
- * scaled by [MARK_SCALE] around its center, so frame zero matches the system splash.
+ * Draws the mark at intro progress [t]. The geometry mirrors ic_splash.xml: a 512-unit viewport,
+ * shifted by [MARK_DX] and [MARK_DY], scaled by [MARK_SCALE] around its center, so frame zero
+ * matches the system splash.
  */
 private fun DrawScope.drawMark(t: Float) {
     val unit = size.minDimension / 512f
     val scale = MARK_SCALE
-    fun point(x: Float, y: Float) = Offset((256f + (x - 256f) * scale) * unit, (256f + (y - 256f) * scale) * unit)
+    fun point(x: Float, y: Float) =
+        Offset((256f + (x + MARK_DX - 256f) * scale) * unit, (256f + (y + MARK_DY - 256f) * scale) * unit)
 
     val center = point(256f, 236f)
     val spin = span(t, 0f, LOCK)

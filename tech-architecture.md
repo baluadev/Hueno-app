@@ -114,14 +114,19 @@ Phần kiếm tiền để sau cùng vì nó không ảnh hưởng tới câu h�
 
 Module `:monetization` gồm quy tắc Pro (`ProRules`), mua Pro qua Play Billing (`ProBilling`), đồng ý và quảng cáo (`AdsController`), và lớp gộp `Monetization` phát ra một trạng thái duy nhất.
 
-Mặc định app dùng **mã thử nghiệm công khai của Google**: bấm vào an toàn nhưng không sinh doanh thu. Trước khi phát hành, đặt mã thật trong `~/.gradle/gradle.properties` (không đưa vào git) hoặc truyền bằng `-P`:
+Mã quảng cáo tách theo loại build trong `app/build.gradle.kts`:
+- **Bản release** dùng mã AdMob thật của Hueno (ghi sẵn trong file build; mã quảng cáo không phải bí mật, vì nó nằm trong mọi APK).
+- **Bản debug** dùng **mã thử nghiệm công khai của Google**. Xem hoặc bấm quảng cáo thật trên máy của nhóm bị AdMob tính là lưu lượng không hợp lệ và có thể khiến tài khoản bị hạn chế, nên đừng đổi bản debug sang mã thật.
 
-| Thuộc tính | Ý nghĩa | Lấy ở đâu |
+Muốn ghi đè thì đặt thuộc tính trong `~/.gradle/gradle.properties` hoặc truyền bằng `-P`:
+
+| Thuộc tính | Ý nghĩa | Mặc định |
 |---|---|---|
-| `HUENO_ADMOB_APP_ID` | Mã ứng dụng AdMob | AdMob, mục ứng dụng |
-| `HUENO_AD_BANNER_UNIT_ID` | Đơn vị quảng cáo banner | AdMob, mục đơn vị quảng cáo |
-| `HUENO_AD_REWARDED_UNIT_ID` | Đơn vị quảng cáo có thưởng | AdMob, mục đơn vị quảng cáo |
-| `HUENO_PRO_PRODUCT_ID` | Mã sản phẩm mua một lần, mặc định `pro_lifetime` | Play Console, mục sản phẩm trong ứng dụng |
+| `HUENO_ADMOB_APP_ID` | Mã ứng dụng AdMob, bản release | `ca-app-pub-8681872943360035~2789069929` |
+| `HUENO_AD_BANNER_UNIT_ID` | Đơn vị banner, bản release | `ca-app-pub-8681872943360035/6803356613` |
+| `HUENO_AD_REWARDED_UNIT_ID` | Đơn vị có thưởng, bản release | `ca-app-pub-8681872943360035/6420213231` |
+| `HUENO_DEBUG_ADMOB_APP_ID`, `HUENO_DEBUG_AD_BANNER_UNIT_ID`, `HUENO_DEBUG_AD_REWARDED_UNIT_ID` | Ba mã tương ứng cho bản debug | Mã thử của Google |
+| `HUENO_PRO_PRODUCT_ID` | Mã sản phẩm mua một lần (cả hai bản) | `pro_lifetime`, tạo trong Play Console |
 
 Các con số của bản miễn phí nằm trong `ProRules`: 6 giờ mỗi video, cộng dồn tối đa 24 giờ, 3 lần so màu mỗi ngày, 20 màu trong lịch sử.
 

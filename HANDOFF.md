@@ -323,3 +323,18 @@ Chủ dự án gửi file Figma "Free UI Icons - Open Source Vector Icon Set (sv
 - Compare (hai vòng tròn) và Approx (≈) không có trong bộ miễn phí, nên được vẽ lại theo cùng phong cách.
 - Ghi công nằm trong Settings, dưới số phiên bản: "Icons: Streamline Core Line Free, CC BY 4.0 (streamlinehq.com)", bấm vào thì mở streamlinehq.com. **Không được bỏ dòng này** khi còn dùng bộ icon. Nên thêm cả vào trang chính sách hoặc giới thiệu khi có.
 - Đã kiểm trên Flip4: Camera, chi tiết màu, Settings.
+
+### Căn lại logo (12/11/2026 tối, chưa commit)
+
+Chủ dự án báo icon trên màn hình chính bị lệch. Đo được hai vấn đề:
+- Logo phóng 0,86 nên mép trên vòng tròn gần chạm mép mặt nạ (mask) của launcher.
+- Tâm vòng tròn đặt ở y = 236 trên khung 512, cao hơn tâm 20 đơn vị, trong khi cái đuôi kéo trọng lượng về góc dưới trái. Trọng tâm tính theo diện tích nằm ở (248,8; 245,1).
+
+Đã sửa:
+- Dịch logo (+7, +11) trên khung 512 ở cả bốn nơi: `ic_launcher_foreground.xml`, `ic_launcher_monochrome.xml`, `ic_splash.xml`, `hueno_mark.xml` (bằng nhóm `translate`), và trong `SplashOverlay` (`MARK_DX`, `MARK_DY`), để khung hình đầu của hiệu ứng vẫn khớp splash hệ thống. Bốn nơi này phải luôn dùng cùng một độ dịch.
+- Icon launcher và icon đơn sắc giảm tỉ lệ từ 0,86 xuống 0,72.
+- Đo trên launcher Samsung của Flip4: logo chiếm 68% chiều rộng ô; chấm giữa lệch tâm ô (+2, −3,4) điểm ảnh trên ô 169 điểm ảnh, trước đây khoảng −8,5. Splash và logo trong app hiển thị đúng.
+
+### Mã AdMob thật (12/11/2026 tối, chưa commit)
+
+Chủ dự án cung cấp mã AdMob thật. Bản **release** giờ dùng app `ca-app-pub-8681872943360035~2789069929`, banner `…/6803356613`, video có thưởng `…/6420213231`. Bản **debug** vẫn dùng mã thử của Google, để không xem hay bấm quảng cáo thật trên máy của nhóm. Chi tiết và cách ghi đè: mục 7 của `tech-architecture.md`. Đã kiểm `BuildConfig` và manifest sau khi gộp của từng bản. Bản release đầy đủ vẫn chưa build được vì chưa có cấu hình ký (vấn đề 6). Vấn đề 28 (mã AdMob thật) đã xong phần quảng cáo; còn sản phẩm Pro trên Play Console.

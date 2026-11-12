@@ -4,13 +4,19 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Ad and product identifiers. Without overrides these are Google's public test ids, which are
-// safe to click but earn nothing. Set the real ones in ~/.gradle/gradle.properties or with -P.
+// Ad and product identifiers. A Gradle property (~/.gradle/gradle.properties or -P) overrides any
+// of them.
 fun setting(name: String, fallback: String): String = (project.findProperty(name) as String?) ?: fallback
 
-val adMobAppId = setting("HUENO_ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
-val adBannerUnitId = setting("HUENO_AD_BANNER_UNIT_ID", "ca-app-pub-3940256099942544/9214589741")
-val adRewardedUnitId = setting("HUENO_AD_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917")
+// Release builds use Hueno's AdMob ids. Debug builds keep Google's public test ids: real ads seen
+// or tapped on the team's own phones count as invalid traffic and can get the AdMob account
+// limited. Ad ids are not secret; they ship inside every APK.
+val releaseAdMobAppId = setting("HUENO_ADMOB_APP_ID", "ca-app-pub-8681872943360035~2789069929")
+val releaseAdBannerUnitId = setting("HUENO_AD_BANNER_UNIT_ID", "ca-app-pub-8681872943360035/6803356613")
+val releaseAdRewardedUnitId = setting("HUENO_AD_REWARDED_UNIT_ID", "ca-app-pub-8681872943360035/6420213231")
+val testAdMobAppId = setting("HUENO_DEBUG_ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+val testAdBannerUnitId = setting("HUENO_DEBUG_AD_BANNER_UNIT_ID", "ca-app-pub-3940256099942544/9214589741")
+val testAdRewardedUnitId = setting("HUENO_DEBUG_AD_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917")
 val proProductId = setting("HUENO_PRO_PRODUCT_ID", "pro_lifetime")
 
 // Address for the "Send feedback" row in Settings. Empty hides the row.
@@ -27,15 +33,20 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        manifestPlaceholders["adMobAppId"] = adMobAppId
-        buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$adBannerUnitId\"")
-        buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$adRewardedUnitId\"")
         buildConfigField("String", "PRO_PRODUCT_ID", "\"$proProductId\"")
         buildConfigField("String", "FEEDBACK_EMAIL", "\"$feedbackEmail\"")
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["adMobAppId"] = testAdMobAppId
+            buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$testAdBannerUnitId\"")
+            buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$testAdRewardedUnitId\"")
+        }
         release {
+            manifestPlaceholders["adMobAppId"] = releaseAdMobAppId
+            buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$releaseAdBannerUnitId\"")
+            buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$releaseAdRewardedUnitId\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
