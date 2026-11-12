@@ -27,7 +27,7 @@
   <main id="main" class="doc">
     <div class="wrap">
       <h1>Privacy Policy</h1>
-      <p class="meta">Hueno: Color Identifier &amp; Name, for Android. Effective 12 November 2026.</p>
+      <p class="meta">Hueno: Color Identifier &amp; Name, for Android. Effective 13 November 2026.</p>
 
       <div class="summary">
         <strong>In short</strong>
@@ -35,6 +35,7 @@
           <li>The camera picture is analyzed on your phone. It is never uploaded and never stored, except a small picture of a color you choose to save.</li>
           <li>Your colors, names, collections and calibrations stay on your phone. We have no servers and no accounts, so we cannot see them.</li>
           <li>The free version shows ads from Google AdMob, which collects device data to deliver ads. Purchases go through Google Play.</li>
+          <li>We count how the app is used with Google Firebase Analytics, without the advertising ID and never the colors you measure.</li>
         </ul>
       </div>
 
@@ -70,15 +71,19 @@
       <h3>Google Play (purchases)</h3>
       <p>Hueno Pro is sold through Google Play Billing. Payment details are handled by Google, never by us. Hueno only receives a confirmation of the purchase from Google Play, which it uses to unlock Pro. See the <a href="https://payments.google.com/payments/apis-secure/u/0/get_legal_document?ldo=0&amp;ldt=privacynotice">Google Payments Privacy Notice</a>.</p>
 
+      <h3>Google Firebase Analytics (usage counts)</h3>
+      <p>To learn which features are used and where people get stuck, Hueno sends usage events to Google Firebase Analytics, which we can see as totals in the Firebase console. The events are: screens opened, finishing the first-run guide, saving a color (with its broad family such as "Blue", whether it came from the camera or a photo, and the reading's confidence), starting a comparison, reaching a free limit, opening the Pro screen, the outcome of a Pro purchase or restore, watching a reward video, exporting to CSV, and each ad shown with the revenue it earned (the ad format, the ad network and the amount), which we use to see how ads pay for the free version.</p>
+      <p>With these events Firebase receives an app instance ID that is created on your phone and reset if you clear the app's data, your device model and Android version, app version, language, and an approximate location (country or region) derived from your IP address. Hueno turns off advertising ID collection in Firebase Analytics, and this data is not used for ads or ad personalization. Hueno never sends the measured color values or codes, names or collections you create, pictures, or anything from your photos. Firebase keeps event data for at most 14 months. See <a href="https://firebase.google.com/support/privacy">Firebase privacy and security</a>.</p>
+
       <h3>What we receive</h3>
-      <p>Nothing automatically. Hueno has no analytics or crash reporting of its own. We only receive what you send us yourself, such as an email; we use it to answer you and keep it only as long as needed for that.</p>
+      <p>The usage totals from Firebase Analytics described above. Besides that, only what you send us yourself, such as an email; we use it to answer you and keep it only as long as needed for that. Hueno has no crash reporting and no servers of its own.</p>
 
       <h2>Permissions</h2>
       <table>
         <thead><tr><th scope="col">Permission</th><th scope="col">Why</th></tr></thead>
         <tbody>
           <tr><td>Camera</td><td>To read colors live. Used only while the camera screen is open.</td></tr>
-          <tr><td>Internet, network state</td><td>For ads and Google Play purchases. Identifying colors works offline.</td></tr>
+          <tr><td>Internet, network state</td><td>For ads, usage counts and Google Play purchases. Identifying colors works offline.</td></tr>
           <tr><td>Advertising ID</td><td>Used by Google AdMob as described above.</td></tr>
           <tr><td>Google Play billing</td><td>To buy and restore Hueno Pro.</td></tr>
         </tbody>
@@ -91,6 +96,7 @@
         <li>Clear all of Hueno's data in Android Settings, under Apps, Hueno, Storage, Clear data, or simply uninstall the app. Because the data exists only on your phone, this removes it completely.</li>
         <li>Change ad consent in Hueno's Settings, under Privacy choices, where available.</li>
         <li>For data held by Google, use the controls Google provides, such as <a href="https://myadcenter.google.com/">My Ad Center</a>.</li>
+        <li>Clearing Hueno's data or reinstalling resets the app instance ID used for usage counts, so new events cannot be linked to earlier ones.</li>
       </ul>
       <p>Depending on where you live, you may have rights to access, correct or delete personal data, or to object to its use. Since we hold no personal data about you beyond any email you send, write to us and we will help, including with requests about the ads providers.</p>
 
