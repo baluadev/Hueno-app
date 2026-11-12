@@ -1,7 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+// Upload key for release builds. Kept outside the repository; never commit it. The default path
+// can be overridden with the Gradle property HUENO_KEYSTORE_PROPERTIES. Without the file, release
+// builds are produced unsigned. Google Play holds the app signing key (Play App Signing), so a lost
+// upload key can be reset through Play Console support.
+val keystoreProperties = Properties().apply {
+    val path = (project.findProperty("HUENO_KEYSTORE_PROPERTIES") as String?)
+        ?: "${System.getProperty("user.home")}/hueno-signing/keystore.properties"
+    val file = File(path)
+    if (file.isFile) file.inputStream().use { load(it) }
 }
 
 // Ad and product identifiers. A Gradle property (~/.gradle/gradle.properties or -P) overrides any
@@ -37,6 +50,17 @@ android {
         buildConfigField("String", "FEEDBACK_EMAIL", "\"$feedbackEmail\"")
     }
 
+    signingConfigs {
+        if (keystoreProperties.containsKey("storeFile")) {
+            create("upload") {
+                storeFile = File(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             manifestPlaceholders["adMobAppId"] = testAdMobAppId
@@ -47,6 +71,7 @@ android {
             manifestPlaceholders["adMobAppId"] = releaseAdMobAppId
             buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$releaseAdBannerUnitId\"")
             buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$releaseAdRewardedUnitId\"")
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

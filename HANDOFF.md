@@ -405,3 +405,16 @@ Chưa kiểm:
 - `store-assets/tablet/tablet-1-camera.png` … `tablet-6-history.png`: 2560×1440 (16:9), cùng 6 chú thích như bộ điện thoại. Chụp trên máy ảo Pixel Tablet ở chiều ngang (cảnh giả lập của emulator thay cho ảnh camera thật), dòng số đo gỡ lỗi tạm ẩn; các màn ảnh, chi tiết màu, lịch sử dùng ảnh bảng màu mẫu. Dựng bằng `store-assets/tools/compose.py tablet <ảnh> "<chú thích>" <ra>`.
 - Đã tải lên Play cho cả ô **7 inch** và **10 inch**, thứ tự 1 → 6, lưu nháp.
 - **Lỗi tìm thấy khi chụp, đã sửa:** trên tablet nằm ngang, đóng băng xong thì chạm vào ảnh không dời vòng ngắm, và nhãn độ tin cậy không hiện. Nguyên nhân: khối khung camera dùng `movableContentOf` trong `remember` nên giữ giá trị cũ của `frozen` và `reading`. Giờ hai giá trị này được truyền vào làm tham số. Đã kiểm: chạm ba điểm cho ba màu khác nhau.
+
+### Ký app, bản release và sản phẩm Pro (13/11/2026)
+
+- **Upload key** nằm ngoài repo: `~/hueno-signing/hueno-upload.jks` (PKCS12, RSA 4096, alias `hueno-upload`, hạn khoảng 27 năm) và `~/hueno-signing/keystore.properties` (mật khẩu ngẫu nhiên). Thư mục quyền 700, file quyền 600. SHA-256 của chứng chỉ: `ED:73:34:6C:DA:30:71:BD:3C:0E:7C:80:10:FE:35:37:2D:0D:81:86:24:77:E6:87:E4:A0:A4:D0:03:31:CD:34`. **Phải sao lưu cả thư mục này** (trình quản lý mật khẩu hoặc ổ mã hóa). Play App Signing giữ khóa ký app, nên mất upload key thì xin Play đặt lại được, nhưng mất vài ngày.
+- `app/build.gradle.kts` đọc file trên (đổi đường dẫn bằng thuộc tính Gradle `HUENO_KEYSTORE_PROPERTIES`); không có file thì bản release không được ký. `.gitignore` thêm `keystore.properties`, `*.p12`.
+- Build: `./gradlew :app:bundleRelease` ra `app/build/outputs/bundle/release/app-release.aab` (9,6 MB). APK release sau R8 là 4,8 MB.
+- Đã thử bản release trên máy ảo Pixel 7: camera, lưu màu, lịch sử, so màu, màn Pro, lần mở thứ hai (khởi động quảng cáo và hộp đồng ý). Không crash, R8 không làm hỏng Room, Billing, Ads.
+- **Internal testing**: đã tải AAB phiên bản 1 (0.1.0) và lưu bản phát hành ở dạng **nháp**, chưa phát hành, chưa có người thử nghiệm.
+- **Sản phẩm `pro_lifetime`**: đã tạo và Active. Tên "Hueno Pro", purchase option `lifetime`, loại Buy, backwards compatible, 2,99 USD quy đổi cho mọi nước (VN 77.000 VND, DE 3,19 EUR).
+
+**Phát hiện, cần chủ dự án làm trong AdMob:** bản release báo lỗi UMP "no form(s) configured for the input app ID". AdMob chưa có thông điệp đồng ý cho app này, nên `canRequestAds()` trả false và app **không bao giờ hiện quảng cáo**. Cần vào AdMob > Privacy & messaging, tạo thông điệp GDPR (và nên tạo cả thông điệp cho các bang Mỹ) cho app `ca-app-pub-8681872943360035~2789069929`, rồi xuất bản.
+
+Còn lại: thêm người thử nghiệm (email) vào Internal testing rồi phát hành để thử mua thật; khi phát hành chính thức thì tăng `versionCode`.
