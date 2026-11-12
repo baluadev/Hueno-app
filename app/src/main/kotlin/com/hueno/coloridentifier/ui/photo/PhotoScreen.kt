@@ -13,8 +13,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,13 +47,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -58,10 +69,17 @@ import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.Rgb
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.max
 import kotlin.math.min
 
 /** Longest side kept when decoding. Larger photos are scaled down to stay within memory. */
 private const val MAX_SIDE = 4096
+
+private const val MIN_ZOOM = 1f
+private const val MAX_ZOOM = 12f
+
+/** Above this zoom, pixels are drawn as crisp squares so single pixels can be picked. */
+private const val PIXEL_ZOOM = 4f
 
 @Composable
 fun PhotoScreen(onSave: (Rgb) -> Unit) {
@@ -70,8 +88,10 @@ fun PhotoScreen(onSave: (Rgb) -> Unit) {
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var failed by remember { mutableStateOf(false) }
     // Pointer position as a fraction of the photo, so it survives layout changes.
-    var pointX by rememberSaveable { mutableStateOf(0.5f) }
-    var pointY by rememberSaveable { mutableStateOf(0.5f) }
+    var pointX by rememberSaveable { mutableFloatStateOf(0.5f) }
+    var pointY by rememberSaveable { mutableFloatStateOf(0.5f) }
+    var zoom by remember { mutableFloatStateOf(1f) }
+    var pan by remember { mutableStateOf(Offset.Zero) }
 
     // The system photo picker needs no storage permission.
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -79,6 +99,8 @@ fun PhotoScreen(onSave: (Rgb) -> Unit) {
             uriText = uri.toString()
             pointX = 0.5f
             pointY = 0.5f
+            zoom = 1f
+            pan = Offset.Zero
         }
     }
     val pick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
@@ -140,43 +162,97 @@ fun PhotoScreen(onSave: (Rgb) -> Unit) {
         }
 
         var box by remember { mutableStateOf(IntSize.Zero) }
+
+        /** Applies a zoom step around [focus] (a point in the box) and keeps the photo in view. */
+        fun zoomBy(factor: Float, focus: Offset, drag: Offset = Offset.Zero) {
+            val view = View(box, photo, zoom, pan)
+            val newZoom = (zoom * factor).coerceIn(MIN_ZOOM, MAX_ZOOM)
+            val applied = newZoom / zoom
+            // Keep the photo point under the focus where it is while scaling, then apply the drag.
+            val fromCenter = focus - view.center
+            val moved = (pan - fromCenter) * applied + fromCenter + drag
+            zoom = newZoom
+            pan = View(box, photo, newZoom, moved).clampedPan()
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 12.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(HuenoColors.InkRaised)
-                .onSizeChanged { box = it }
-                .pointerInput(photo) {
-                    detectTapGestures { tap ->
-                        fractionOf(tap, box, photo)?.let { (x, y) ->
-                            pointX = x
-                            pointY = y
-                        }
-                    }
-                }
-                .pointerInput(photo) {
-                    detectDragGestures { change, _ ->
-                        fractionOf(change.position, box, photo)?.let { (x, y) ->
-                            pointX = x
-                            pointY = y
-                        }
-                    }
-                },
+                .background(HuenoColors.InkRaised),
         ) {
-            Image(
-                bitmap = photo.asImageBitmap(),
-                contentDescription = stringResource(R.string.photo_description),
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit,
-            )
-            Canvas(Modifier.fillMaxSize()) {
-                val rect = fittedRect(IntSize(size.width.toInt(), size.height.toInt()), photo)
-                val center = Offset(rect.left + pointX * rect.width, rect.top + pointY * rect.height)
-                drawCircle(HuenoColors.Ink, 26f, center, style = Stroke(width = 5f))
-                drawCircle(Color.White, 22f, center, style = Stroke(width = 5f))
-                drawCircle(Color.White, 3f, center)
+            // The photo and its gestures live in their own layer. The zoom buttons are a sibling of
+            // it, not a child, so pressing a button never also moves the ring.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { box = it }
+                    .pointerInput(photo) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            // One finger moves the ring; a second finger switches the gesture to zooming
+                            // and panning for the rest of it, so lifting a finger does not jump the ring.
+                            var zooming = false
+                            View(box, photo, zoom, pan).fractionAt(down.position)?.let { (x, y) ->
+                                pointX = x
+                                pointY = y
+                            }
+                            do {
+                                val event = awaitPointerEvent()
+                                val pressed = event.changes.filter { it.pressed }
+                                if (pressed.size >= 2) {
+                                    zooming = true
+                                    zoomBy(event.calculateZoom(), event.calculateCentroid(useCurrent = false), event.calculatePan())
+                                } else if (pressed.size == 1 && !zooming) {
+                                    View(box, photo, zoom, pan).fractionAt(pressed[0].position)?.let { (x, y) ->
+                                        pointX = x
+                                        pointY = y
+                                    }
+                                }
+                                event.changes.forEach { it.consume() }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    },
+            ) {
+                Image(
+                    bitmap = photo.asImageBitmap(),
+                    contentDescription = stringResource(R.string.photo_description),
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        scaleX = zoom
+                        scaleY = zoom
+                        translationX = pan.x
+                        translationY = pan.y
+                    },
+                    contentScale = ContentScale.Fit,
+                    filterQuality = if (zoom >= PIXEL_ZOOM) FilterQuality.None else FilterQuality.Low,
+                )
+                Canvas(Modifier.fillMaxSize()) {
+                    val view = View(IntSize(size.width.toInt(), size.height.toInt()), photo, zoom, pan)
+                    val center = view.positionOf(pointX, pointY)
+                    drawCircle(HuenoColors.Ink, 26f, center, style = Stroke(width = 5f))
+                    drawCircle(Color.White, 22f, center, style = Stroke(width = 5f))
+                    drawCircle(Color.White, 3f, center)
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(HuenoColors.Ink)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                // The buttons zoom around the ring, so the picked spot stays in view. The ring's
+                // position is read at click time, from the current zoom and pan.
+                ZoomButton("−", stringResource(R.string.photo_zoom_out), zoom > MIN_ZOOM) {
+                    zoomBy(0.5f, View(box, photo, zoom, pan).positionOf(pointX, pointY))
+                }
+                ZoomButton("+", stringResource(R.string.photo_zoom_in), zoom < MAX_ZOOM) {
+                    zoomBy(2f, View(box, photo, zoom, pan).positionOf(pointX, pointY))
+                }
             }
         }
 
@@ -215,23 +291,64 @@ fun PhotoScreen(onSave: (Rgb) -> Unit) {
     }
 }
 
-private data class FittedRect(val left: Float, val top: Float, val width: Float, val height: Float)
-
-/** Where a photo lands inside [box] when scaled to fit. */
-private fun fittedRect(box: IntSize, photo: Bitmap): FittedRect {
-    val scale = min(box.width.toFloat() / photo.width, box.height.toFloat() / photo.height)
-    val w = photo.width * scale
-    val h = photo.height * scale
-    return FittedRect((box.width - w) / 2, (box.height - h) / 2, w, h)
+@Composable
+private fun ZoomButton(symbol: String, description: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            symbol,
+            color = if (enabled) HuenoColors.OnInk else HuenoColors.OnInkMuted,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
 }
 
-/** Converts a touch position to a fraction of the photo, or null when the box has no size yet. */
-private fun fractionOf(position: Offset, box: IntSize, photo: Bitmap): Pair<Float, Float>? {
-    if (box.width == 0 || box.height == 0) return null
-    val rect = fittedRect(box, photo)
-    val x = ((position.x - rect.left) / rect.width).coerceIn(0f, 1f)
-    val y = ((position.y - rect.top) / rect.height).coerceIn(0f, 1f)
-    return x to y
+/**
+ * The geometry of a photo shown in a box: fitted to the box, then scaled by [zoom] around the
+ * box center and shifted by [pan]. Converts between touch positions and fractions of the photo.
+ */
+private class View(private val box: IntSize, photo: Bitmap, private val zoom: Float, private val pan: Offset) {
+
+    val center = Offset(box.width / 2f, box.height / 2f)
+
+    private val fit = if (box.width == 0 || box.height == 0) {
+        0f
+    } else {
+        min(box.width.toFloat() / photo.width, box.height.toFloat() / photo.height)
+    }
+    private val fittedWidth = photo.width * fit
+    private val fittedHeight = photo.height * fit
+    private val left = (box.width - fittedWidth) / 2
+    private val top = (box.height - fittedHeight) / 2
+
+    /** Screen position of a point given as a fraction of the photo. */
+    fun positionOf(fx: Float, fy: Float): Offset {
+        val unzoomed = Offset(left + fx * fittedWidth, top + fy * fittedHeight)
+        return center + (unzoomed - center) * zoom + pan
+    }
+
+    /** Fraction of the photo under a touch position, clamped to the photo; null before layout. */
+    fun fractionAt(position: Offset): Pair<Float, Float>? {
+        if (fit == 0f) return null
+        val unzoomed = center + (position - pan - center) / zoom
+        val x = ((unzoomed.x - left) / fittedWidth).coerceIn(0f, 1f)
+        val y = ((unzoomed.y - top) / fittedHeight).coerceIn(0f, 1f)
+        return x to y
+    }
+
+    /** The pan limited so the zoomed photo cannot be dragged away from the box. */
+    fun clampedPan(): Offset {
+        val maxX = max(0f, (fittedWidth * zoom - box.width) / 2)
+        val maxY = max(0f, (fittedHeight * zoom - box.height) / 2)
+        return Offset(pan.x.coerceIn(-maxX, maxX), pan.y.coerceIn(-maxY, maxY))
+    }
 }
 
 /** Decodes a photo into a software bitmap whose pixels can be read. Returns null on failure. */

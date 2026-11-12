@@ -17,16 +17,25 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,17 +63,25 @@ import com.hueno.coloridentifier.ui.tipRes
 import com.hueno.core.color.ColorMath
 import com.hueno.core.color.ConfidenceLevel
 
+/** Longest custom name or collection title accepted, matching what the data layer keeps. */
+private const val MAX_TEXT = 60
+
 @Composable
 fun ResultScreen(
     capture: Capture,
+    collections: List<String>,
     speaker: Speaker,
     onBack: () -> Unit,
     onCompare: () -> Unit,
     onDelete: () -> Unit,
+    onRename: (String?) -> Unit,
+    onMove: (String?) -> Unit,
     bannerUnitId: String? = null,
 ) {
     val rgb = capture.rgb
     val (h, s, l) = ColorMath.toHsl(rgb)
+    var renaming by remember { mutableStateOf(false) }
+    var moving by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -139,18 +156,26 @@ fun ResultScreen(
 
             QualityNote(capture)
 
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(HuenoColors.Card)
-                    .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp)),
-            ) {
+            Card {
                 CodeRow(stringResource(R.string.result_hex), rgb.hex)
                 HorizontalDivider(color = HuenoColors.PaperLine)
                 CodeRow(stringResource(R.string.result_rgb), stringResource(R.string.rgb_value, rgb.r, rgb.g, rgb.b))
                 HorizontalDivider(color = HuenoColors.PaperLine)
                 CodeRow(stringResource(R.string.result_hsl), stringResource(R.string.hsl_value, h, s, l))
+            }
+
+            Card {
+                EditRow(
+                    label = stringResource(R.string.result_your_name),
+                    value = capture.label ?: stringResource(R.string.result_no_name),
+                    action = stringResource(R.string.result_edit),
+                ) { renaming = true }
+                HorizontalDivider(color = HuenoColors.PaperLine)
+                EditRow(
+                    label = stringResource(R.string.result_collection),
+                    value = capture.collection ?: stringResource(R.string.result_no_collection),
+                    action = stringResource(R.string.result_change),
+                ) { moving = true }
             }
 
             Button(
@@ -181,6 +206,39 @@ fun ResultScreen(
             bannerUnitId?.let { AdBanner(it) }
         }
     }
+
+    if (renaming) {
+        RenameDialog(
+            current = capture.label.orEmpty(),
+            onDismiss = { renaming = false },
+            onSave = {
+                onRename(it)
+                renaming = false
+            },
+        )
+    }
+    if (moving) {
+        CollectionDialog(
+            current = capture.collection,
+            collections = collections,
+            onDismiss = { moving = false },
+            onSave = {
+                onMove(it)
+                moving = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun Card(content: @Composable () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(HuenoColors.Card)
+            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp)),
+    ) { content() }
 }
 
 @Composable
@@ -241,5 +299,103 @@ private fun CodeRow(label: String, value: String) {
         )
         Text(value, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
         Icon(HuenoIcons.Copy, contentDescription = null, tint = HuenoColors.Action, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun EditRow(label: String, value: String, action: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, color = HuenoColors.OnPaperMuted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(value, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+        }
+        Text(action, color = HuenoColors.Action, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun RenameDialog(current: String, onDismiss: () -> Unit, onSave: (String?) -> Unit) {
+    var text by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.rename_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.rename_body))
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it.take(MAX_TEXT) },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.result_your_name)) },
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(text) }) { Text(stringResource(R.string.dialog_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calibrate_cancel)) } },
+    )
+}
+
+/** Picks an existing collection, types a new one, or takes the color out of collections. */
+@Composable
+private fun CollectionDialog(
+    current: String?,
+    collections: List<String>,
+    onDismiss: () -> Unit,
+    onSave: (String?) -> Unit,
+) {
+    var selected by remember { mutableStateOf(current) }
+    var newName by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.collection_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                ChoiceRow(stringResource(R.string.result_no_collection), selected == null && newName.isBlank()) {
+                    selected = null
+                    newName = ""
+                }
+                collections.forEach { name ->
+                    ChoiceRow(name, selected == name && newName.isBlank()) {
+                        selected = name
+                        newName = ""
+                    }
+                }
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it.take(MAX_TEXT) },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.collection_new)) },
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        },
+        // Typing a new name takes priority over the selected row.
+        confirmButton = {
+            TextButton(onClick = { onSave(newName.ifBlank { selected }) }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calibrate_cancel)) } },
+    )
+}
+
+@Composable
+private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(label)
     }
 }

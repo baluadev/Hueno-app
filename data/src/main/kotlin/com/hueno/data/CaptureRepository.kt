@@ -17,6 +17,10 @@ data class StoredCapture(
     val confidence: Confidence?,
     val calibrated: Boolean,
     val timeMillis: Long,
+    /** A name the user gave this color; null when they gave none. */
+    val label: String? = null,
+    /** The collection it is filed under; null when it is in none. */
+    val collection: String? = null,
 )
 
 /** Saved colors, newest first. */
@@ -40,9 +44,22 @@ class CaptureRepository internal constructor(private val dao: CaptureDao) {
     }
 
     suspend fun delete(id: Long) = dao.delete(id)
+
+    /** Sets the user's own name for a color. Blank text clears it. */
+    suspend fun rename(id: Long, label: String?) = dao.setLabel(id, CaptureMapper.clean(label))
+
+    /** Files a color under a collection. Blank text takes it out of any collection. */
+    suspend fun moveToCollection(id: Long, collection: String?) = dao.setCollection(id, CaptureMapper.clean(collection))
 }
 
 internal object CaptureMapper {
+
+    /** Longest name or collection title kept. */
+    const val MAX_TEXT = 60
+
+    /** Trims, collapses line breaks and caps the length; returns null for blank text. */
+    fun clean(text: String?): String? =
+        text?.replace(Regex("\\s+"), " ")?.trim()?.take(MAX_TEXT)?.trim()?.takeIf { it.isNotEmpty() }
 
     fun toEntity(rgb: Rgb, fromPhoto: Boolean, confidence: Confidence?, calibrated: Boolean, timeMillis: Long) =
         CaptureEntity(
@@ -68,6 +85,8 @@ internal object CaptureMapper {
             confidence = level?.let { Confidence(it, issue) },
             calibrated = e.calibrated,
             timeMillis = e.timeMillis,
+            label = clean(e.label),
+            collection = clean(e.collection),
         )
     }
 }

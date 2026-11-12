@@ -3,6 +3,7 @@ package com.hueno.coloridentifier.ui
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,24 +15,27 @@ import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.ColorReading
 import com.hueno.core.color.Confidence
 import com.hueno.core.color.Rgb
+import com.hueno.data.CaptureCsv
 import com.hueno.data.CaptureRepository
 import com.hueno.data.StoredCapture
 import com.hueno.monetization.Monetization
 import com.hueno.monetization.MonetizationConfig
 import com.hueno.monetization.MonetizationState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class Tab { CAMERA, PHOTO, HISTORY }
 
 enum class CaptureSource { CAMERA, PHOTO }
 
 /** Why the Pro screen is open. The limit reasons add a line explaining what was reached. */
-enum class ProReason { MENU, COMPARE_LIMIT, HISTORY_LIMIT }
+enum class ProReason { MENU, COMPARE_LIMIT, HISTORY_LIMIT, EXPORT }
 
 /** A saved color as the screens show it. The name is derived from the stored color. */
 data class Capture(
@@ -43,7 +47,14 @@ data class Capture(
     val confidence: Confidence?,
     val calibrated: Boolean,
     val timeMillis: Long,
-)
+    /** A name the user gave this color; null when they gave none. */
+    val label: String? = null,
+    /** The collection it is filed under; null when it is in none. */
+    val collection: String? = null,
+) {
+    /** What to call this color in a list: the user's name for it, else its plain color name. */
+    val title: String get() = label ?: name.plain
+}
 
 private fun StoredCapture.toCapture() = Capture(
     id = id,
@@ -53,6 +64,8 @@ private fun StoredCapture.toCapture() = Capture(
     confidence = confidence,
     calibrated = calibrated,
     timeMillis = timeMillis,
+    label = label,
+    collection = collection,
 )
 
 /** Navigation state, saved colors, the comparison reference, and Pro and ads. */
@@ -98,12 +111,32 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     var rewardedBusy by mutableStateOf(false)
         private set
 
+    /** The collection History is filtered by; null shows every color. */
+    var selectedCollection by mutableStateOf<String?>(null)
+        private set
+
     // Collected eagerly: the free limit needs the saved count even when History is not on screen.
-    val captures: StateFlow<List<Capture>> = repository.observeAll()
+    private val stored: StateFlow<List<StoredCapture>> = repository.observeAll()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val captures: StateFlow<List<Capture>> = stored
         .map { rows -> rows.map { it.toCapture() } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    /** Names of collections that hold at least one color, in alphabetical order. */
+    val collections: StateFlow<List<String>> = stored
+        .map { rows -> rows.mapNotNull { it.collection }.distinct().sortedBy { it.lowercase() } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     init {
+        // Keeps the open detail screen and the collection filter in step with the stored data.
+        viewModelScope.launch {
+            captures.collect { list ->
+                openCapture?.let { open -> list.firstOrNull { it.id == open.id }?.let { openCapture = it } }
+                val filter = selectedCollection
+                if (filter != null && list.none { it.collection == filter }) selectedCollection = null
+            }
+        }
         // Keeps the pass countdown current and ends Pro when the pass runs out.
         viewModelScope.launch {
             while (true) {
@@ -157,6 +190,48 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     fun delete(capture: Capture) {
         if (openCapture?.id == capture.id) openCapture = null
         viewModelScope.launch { repository.delete(capture.id) }
+    }
+
+    fun rename(capture: Capture, label: String?) {
+        viewModelScope.launch { repository.rename(capture.id, label) }
+    }
+
+    fun moveToCollection(capture: Capture, collection: String?) {
+        viewModelScope.launch { repository.moveToCollection(capture.id, collection) }
+    }
+
+    fun selectCollection(name: String?) {
+        selectedCollection = name
+    }
+
+    /** True when the user may export; otherwise opens the Pro screen, since export is a Pro feature. */
+    fun canExport(): Boolean {
+        if (money.value.isPro) return true
+        proScreen = ProReason.EXPORT
+        return false
+    }
+
+    /**
+     * Writes the colors currently listed in History (all, or the selected collection) to [uri]
+     * as CSV. [onDone] runs on the main thread with whether the file was written.
+     */
+    fun exportCsv(uri: Uri, onDone: (Boolean) -> Unit) {
+        val filter = selectedCollection
+        val rows = stored.value.filter { filter == null || it.collection == filter }
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                try {
+                    getApplication<Application>().contentResolver.openOutputStream(uri)?.use { out ->
+                        // The byte order mark makes spreadsheet apps read the file as UTF-8.
+                        out.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
+                        out.write(CaptureCsv.build(rows).toByteArray(Charsets.UTF_8))
+                    } != null
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            onDone(ok)
+        }
     }
 
     /** Starts a comparison against [rgb], or ends it when null. Free users have a daily allowance. */

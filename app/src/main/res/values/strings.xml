@@ -80,6 +80,17 @@
     <string name="result_copy">Copy %1$s</string>
     <string name="result_copied">%1$s copied</string>
     <string name="result_from_photo">Picked from a photo. Exact pixel value.</string>
+    <string name="result_your_name">Your name for it</string>
+    <string name="result_no_name">None yet</string>
+    <string name="result_edit">Edit</string>
+    <string name="result_collection">Collection</string>
+    <string name="result_no_collection">None</string>
+    <string name="result_change">Change</string>
+    <string name="rename_title">Name this color</string>
+    <string name="rename_body">Give it a name you will recognize, such as \"Living room wall\". Leave it empty to remove the name.</string>
+    <string name="dialog_save">Save</string>
+    <string name="collection_title">Add to a collection</string>
+    <string name="collection_new">New collection</string>
     <string name="result_compare">Compare with camera</string>
     <string name="result_delete">Delete</string>
     <string name="rgb_value">%1$d, %2$d, %3$d</string>
@@ -91,7 +102,9 @@
     <string name="photo_choose_another">Choose another</string>
     <string name="photo_empty_title">Pick a color from a photo</string>
     <string name="photo_empty_body">Open a photo or screenshot, then tap or drag to read any color in it.</string>
-    <string name="photo_hint">Tap or drag on the photo to move the ring.</string>
+    <string name="photo_hint">Tap or drag to move the ring. Pinch to zoom.</string>
+    <string name="photo_zoom_in">Zoom in</string>
+    <string name="photo_zoom_out">Zoom out</string>
     <string name="photo_save">Save this color</string>
     <string name="photo_error">That photo could not be opened.</string>
     <string name="photo_description">Selected photo</string>
@@ -104,6 +117,8 @@
     <string name="pro_benefit_ads">No ads anywhere</string>
     <string name="pro_benefit_history">Unlimited history</string>
     <string name="pro_benefit_compare">Unlimited color comparisons</string>
+    <string name="pro_benefit_export">Export your colors to CSV</string>
+    <string name="pro_reason_export">Exporting to CSV is part of Pro.</string>
     <string name="pro_buy_title">Buy Pro, yours to keep</string>
     <string name="pro_buy_subtitle">Pay once. No subscription.</string>
     <string name="pro_buy_unavailable">Not available right now. Check your connection.</string>
@@ -129,6 +144,13 @@
     <string name="history_title">History</string>
     <string name="history_empty_title">No colors yet</string>
     <string name="history_empty_body">Colors you capture with the camera or save from a photo appear here.</string>
-    <string name="history_count">%1$d saved</string>
+    <plurals name="history_count">
+        <item quantity="one">%1$d color</item>
+        <item quantity="other">%1$d colors</item>
+    </plurals>
+    <string name="history_export">Export</string>
+    <string name="history_all">All colors</string>
+    <string name="export_done">Colors exported</string>
+    <string name="export_failed">The file could not be written</string>
     <string name="detail_and_hex">%1$s · %2$s</string>
 </resources>

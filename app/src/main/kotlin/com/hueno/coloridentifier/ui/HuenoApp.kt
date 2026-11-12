@@ -1,7 +1,10 @@
 package com.hueno.coloridentifier.ui
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +59,19 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
 
     LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
 
+    val collections by viewModel.collections.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val exportDone = stringResource(R.string.export_done)
+    val exportFailed = stringResource(R.string.export_failed)
+    // The system file picker chooses where the CSV goes, so no storage permission is needed.
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) {
+            viewModel.exportCsv(uri) { ok ->
+                Toast.makeText(context, if (ok) exportDone else exportFailed, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     HuenoTheme(dark = dark) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Column(Modifier.fillMaxSize().safeDrawingPadding()) {
@@ -70,11 +86,16 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                         Tab.PHOTO -> PhotoScreen(onSave = viewModel::captureFromPhoto)
                         Tab.HISTORY -> {
                             val captures by viewModel.captures.collectAsStateWithLifecycle()
+                            val filter = viewModel.selectedCollection
                             HistoryScreen(
-                                captures = captures,
+                                captures = captures.filter { filter == null || it.collection == filter },
+                                collections = collections,
+                                selectedCollection = filter,
                                 isPro = money.isPro,
                                 bannerUnitId = bannerUnitId,
                                 onOpen = viewModel::open,
+                                onSelectCollection = viewModel::selectCollection,
+                                onExport = { if (viewModel.canExport()) exportLauncher.launch(EXPORT_FILE_NAME) },
                                 onOpenPro = viewModel::openPro,
                             )
                         }
@@ -92,10 +113,13 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         HuenoTheme(dark = false) {
             ResultScreen(
                 capture = capture,
+                collections = collections,
                 speaker = speaker,
                 onBack = viewModel::closeCapture,
                 onCompare = { viewModel.compareWithCamera(capture) },
                 onDelete = { viewModel.delete(capture) },
+                onRename = { viewModel.rename(capture, it) },
+                onMove = { viewModel.moveToCollection(capture, it) },
                 bannerUnitId = bannerUnitId,
             )
         }
@@ -127,6 +151,8 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         }
     }
 }
+
+private const val EXPORT_FILE_NAME = "hueno-colors.csv"
 
 /** Keeps status and navigation bar icons readable: light icons on dark screens and the reverse. */
 @Composable
