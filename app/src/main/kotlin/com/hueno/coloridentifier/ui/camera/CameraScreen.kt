@@ -21,6 +21,10 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +67,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -272,164 +277,199 @@ private fun LiveCamera(
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
-        TopBar(
-            torch = torch,
-            calibrated = state.reading?.calibrated == true,
-            onTorch = {
-                torch = !torch
-                camera.setTorch(torch)
-                // The torch changes the light the calibration was measured under.
-                dropCalibration(CameraIssue.CALIBRATION_CLEARED_TORCH)
-            },
-            onCalibrate = { calibrating = true },
-            onSettings = onOpenSettings,
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 12.dp)
-                .clip(HuenoShapes.Large)
-                .background(HuenoColors.Surface),
-        ) {
-            // The picture and its touch handling are one layer; the chips above are siblings, so
-            // pressing them never moves the ring.
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { box = it }
-                    .pointerInput(frozen) {
-                        if (!frozen) return@pointerInput
-                        awaitEachGesture {
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            moveRing(down.position)
-                            do {
-                                val event = awaitPointerEvent()
-                                event.changes.firstOrNull { it.pressed }?.let { moveRing(it.position) }
-                                event.changes.forEach { it.consume() }
-                            } while (event.changes.any { it.pressed })
+    // Moved, not recreated, when the layout switches between phone and wide: the preview keeps
+    // its surface and the camera keeps running. The lambda is remembered once, so anything that
+    // is a plain value (not state) must come in as a parameter, or it would stay at its first value.
+    val viewfinder = remember {
+        movableContentOf { vfModifier: Modifier, frozen: Boolean, reading: ColorReading? ->
+                Box(
+                    modifier = vfModifier
+                        .padding(horizontal = 12.dp)
+                        .clip(HuenoShapes.Large)
+                        .background(HuenoColors.Surface),
+                ) {
+                    // The picture and its touch handling are one layer; the chips above are siblings, so
+                    // pressing them never moves the ring.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .onSizeChanged { box = it }
+                            .pointerInput(frozen) {
+                                if (!frozen) return@pointerInput
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    moveRing(down.position)
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        event.changes.firstOrNull { it.pressed }?.let { moveRing(it.position) }
+                                        event.changes.forEach { it.consume() }
+                                    } while (event.changes.any { it.pressed })
+                                }
+                            },
+                    ) {
+                        AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+                        frozenFrame?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.FillBounds,
+                            )
                         }
+                        // Drawn against the shorter side of the preview. The preview is center-cropped, so
+                        // the live ring matches the sampled area closely but not to the pixel.
+                        Canvas(Modifier.fillMaxSize()) {
+                            val radius = (minOf(this.size.width, this.size.height) * size.radiusFraction).toFloat()
+                            val center = if (frozen) {
+                                Offset(this.size.width * ring.x, this.size.height * ring.y)
+                            } else {
+                                Offset(this.size.width / 2, this.size.height / 2)
+                            }
+                            drawCircle(HuenoBrand.Ink, radius + 4f, center, style = Stroke(width = 5f))
+                            drawCircle(Color.White, radius, center, style = Stroke(width = 5f))
+                            drawCircle(Color.White, 3f, center)
+                        }
+                    }
+                    // One row, so a long chip wraps onto a second line instead of sliding under the selector.
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        ConfidenceChip(reading, frozen, Modifier.weight(1f, fill = false).padding(end = 8.dp))
+                        SizeSelector(
+                            selected = size,
+                            onSelect = {
+                                size = it
+                                camera.sampleSize = it
+                                frozenFrame?.let { frame ->
+                                    frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, it.radiusFraction))
+                                }
+                            },
+                        )
+                    }
+                }
+        }
+    }
+    val topBar: @Composable () -> Unit = {
+            TopBar(
+                torch = torch,
+                calibrated = state.reading?.calibrated == true,
+                onTorch = {
+                    torch = !torch
+                    camera.setTorch(torch)
+                    // The torch changes the light the calibration was measured under.
+                    dropCalibration(CameraIssue.CALIBRATION_CLEARED_TORCH)
+                },
+                onCalibrate = { calibrating = true },
+                onSettings = onOpenSettings,
+            )
+    }
+    val controls: @Composable ColumnScope.() -> Unit = {
+            if (calibrating) {
+                CalibrationPanel(
+                    calibrated = state.reading?.calibrated == true,
+                    supportsProfiles = state.supportsProfiles,
+                    profiles = profiles,
+                    issue = state.issue,
+                    onCalibrate = {
+                        camera.sampleSize = SampleSize.LARGE
+                        size = SampleSize.LARGE
+                        camera.calibrate()
                     },
-            ) {
-                AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-                frozenFrame?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.FillBounds,
+                    onSave = { if (canSaveProfile(profiles.size)) namingProfile = true else onProfileLimit() },
+                    onUse = {
+                        camera.applyProfile(it)
+                        calibrating = false
+                    },
+                    onDelete = { profiles = profileStore.delete(it.id) },
+                    onClear = {
+                        camera.clearCalibration()
+                        calibrating = false
+                    },
+                    onDone = { calibrating = false },
+                )
+            } else {
+                if (compareReference != null && reading != null) {
+                    ComparePanel(reference = compareReference, current = reading.rgb) { speaker.say(it) }
+                } else {
+                    ReadingRow(reading, frozen) { reading?.let { speaker.say(it.name.plain) } }
+                }
+                state.issue?.let {
+                    Text(
+                        stringResource(it.messageRes()),
+                        color = HuenoColors.Text,
+                        fontSize = HuenoType.BodySmall,
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
-                // Drawn against the shorter side of the preview. The preview is center-cropped, so
-                // the live ring matches the sampled area closely but not to the pixel.
-                Canvas(Modifier.fillMaxSize()) {
-                    val radius = (minOf(this.size.width, this.size.height) * size.radiusFraction).toFloat()
-                    val center = if (frozen) {
-                        Offset(this.size.width * ring.x, this.size.height * ring.y)
-                    } else {
-                        Offset(this.size.width / 2, this.size.height / 2)
-                    }
-                    drawCircle(HuenoBrand.Ink, radius + 4f, center, style = Stroke(width = 5f))
-                    drawCircle(Color.White, radius, center, style = Stroke(width = 5f))
-                    drawCircle(Color.White, 3f, center)
-                }
-            }
-            // One row, so a long chip wraps onto a second line instead of sliding under the selector.
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
-            ) {
-                ConfidenceChip(reading, frozen, Modifier.weight(1f, fill = false).padding(end = 8.dp))
-                SizeSelector(
-                    selected = size,
-                    onSelect = {
-                        size = it
-                        camera.sampleSize = it
-                        frozenFrame?.let { frame ->
-                            frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, it.radiusFraction))
+                if (BuildConfig.DEBUG) DebugLine(state)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 36.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LabeledAction(
+                        icon = if (frozen) HuenoIcons.Play else HuenoIcons.Pause,
+                        label = stringResource(if (frozen) R.string.camera_resume else R.string.camera_freeze),
+                    ) {
+                        if (frozen) {
+                            frozenFrame = null
+                            frozenReading = null
+                            camera.frozen = false
+                        } else {
+                            camera.frozen = true
+                            ring = Offset(0.5f, 0.5f)
+                            frozenReading = null
+                            frozenFrame = previewView.bitmap
                         }
-                    },
-                )
+                    }
+                    CaptureButton(enabled = reading != null) {
+                        reading?.let { current ->
+                            // The picture shows what was in the ring: the frozen frame, or the live one.
+                            val frame = frozenFrame ?: previewView.bitmap
+                            val spot = if (frozen) ring else Offset(0.5f, 0.5f)
+                            onCapture(current, frame?.let { Thumbnails.around(it, spot.x, spot.y) })
+                        }
+                    }
+                    val comparing = compareReference != null
+                    LabeledAction(
+                        icon = if (comparing) HuenoIcons.Close else HuenoIcons.Compare,
+                        label = stringResource(if (comparing) R.string.compare_end else R.string.compare_start),
+                    ) {
+                        // Starting a comparison takes the color in the ring as color A.
+                        onCompareReference(if (comparing) null else reading?.rgb)
+                    }
+                }
             }
-        }
+    }
 
-        if (calibrating) {
-            CalibrationPanel(
-                calibrated = state.reading?.calibrated == true,
-                supportsProfiles = state.supportsProfiles,
-                profiles = profiles,
-                issue = state.issue,
-                onCalibrate = {
-                    camera.sampleSize = SampleSize.LARGE
-                    size = SampleSize.LARGE
-                    camera.calibrate()
-                },
-                onSave = { if (canSaveProfile(profiles.size)) namingProfile = true else onProfileLimit() },
-                onUse = {
-                    camera.applyProfile(it)
-                    calibrating = false
-                },
-                onDelete = { profiles = profileStore.delete(it.id) },
-                onClear = {
-                    camera.clearCalibration()
-                    calibrating = false
-                },
-                onDone = { calibrating = false },
-            )
+    // The activity survives rotation on large screens, so the preview is told about it here.
+    val orientation = LocalConfiguration.current.orientation
+    LaunchedEffect(orientation) {
+        previewView.display?.let { camera.setDisplayRotation(it.rotation) }
+    }
+
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        // A tablet held sideways, or an unfolded phone: the picture on the left, the reading and
+        // the buttons in a column on the right, instead of a squashed strip of picture.
+        val wide = maxWidth >= 600.dp && maxWidth > maxHeight
+        if (wide) {
+            Row(Modifier.fillMaxSize().padding(vertical = 12.dp)) {
+                viewfinder(Modifier.weight(1f).fillMaxHeight(), frozen, reading)
+                Column(
+                    Modifier.width(420.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+                ) {
+                    topBar()
+                    Spacer(Modifier.height(8.dp))
+                    controls()
+                }
+            }
         } else {
-            if (compareReference != null && reading != null) {
-                ComparePanel(reference = compareReference, current = reading.rgb) { speaker.say(it) }
-            } else {
-                ReadingRow(reading, frozen) { reading?.let { speaker.say(it.name.plain) } }
-            }
-            state.issue?.let {
-                Text(
-                    stringResource(it.messageRes()),
-                    color = HuenoColors.Text,
-                    fontSize = HuenoType.BodySmall,
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                )
-            }
-            if (BuildConfig.DEBUG) DebugLine(state)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 36.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LabeledAction(
-                    icon = if (frozen) HuenoIcons.Play else HuenoIcons.Pause,
-                    label = stringResource(if (frozen) R.string.camera_resume else R.string.camera_freeze),
-                ) {
-                    if (frozen) {
-                        frozenFrame = null
-                        frozenReading = null
-                        camera.frozen = false
-                    } else {
-                        camera.frozen = true
-                        ring = Offset(0.5f, 0.5f)
-                        frozenReading = null
-                        frozenFrame = previewView.bitmap
-                    }
-                }
-                CaptureButton(enabled = reading != null) {
-                    reading?.let { current ->
-                        // The picture shows what was in the ring: the frozen frame, or the live one.
-                        val frame = frozenFrame ?: previewView.bitmap
-                        val spot = if (frozen) ring else Offset(0.5f, 0.5f)
-                        onCapture(current, frame?.let { Thumbnails.around(it, spot.x, spot.y) })
-                    }
-                }
-                val comparing = compareReference != null
-                LabeledAction(
-                    icon = if (comparing) HuenoIcons.Close else HuenoIcons.Compare,
-                    label = stringResource(if (comparing) R.string.compare_end else R.string.compare_start),
-                ) {
-                    // Starting a comparison takes the color in the ring as color A.
-                    onCompareReference(if (comparing) null else reading?.rgb)
-                }
+            Column(Modifier.fillMaxSize()) {
+                topBar()
+                viewfinder(Modifier.fillMaxWidth().weight(1f), frozen, reading)
+                controls()
             }
         }
     }

@@ -370,3 +370,38 @@ Còn thiếu trước khi gửi duyệt:
 - Trên Play Console, muốn đổi thứ tự ảnh thì gỡ khỏi ô rồi thêm lại từ thư viện theo thứ tự mong muốn; tải nhiều ảnh cùng lúc thì thứ tự không theo tên file.
 
 Vấn đề tìm thấy khi chụp: màu đỏ #B22335 có "Closest named shade: Brown", vì tên CSS "brown" (#A52A2A) thực ra là một màu đỏ đậm. Người đọc sẽ thấy "Red… Brown" và nghĩ app gọi sai. Nên bỏ hoặc đổi tên các màu CSS gây hiểu nhầm (brown, maroon…) trong `NamedColors` cho họ màu đỏ.
+
+### Website và App content trên Play Console (12–13/11/2026)
+
+- Website: https://hueno.pages.dev (Cloudflare Pages, nhánh `website`, worktree ở `site/`). Chính sách quyền riêng tư: https://hueno.pages.dev/privacy. **Mọi khai báo dưới đây phải khớp với chính sách này**; app thêm SDK, quyền hay analytics thì sửa cả hai.
+- App content đã xong hết ("You've caught up with everything"):
+  - Privacy policy: link ở trên.
+  - Sign-in details: Yes, kèm hướng dẫn cho người duyệt (không có tài khoản; mở Pro miễn phí bằng video có thưởng trong Settings > Hueno Pro).
+  - Ads: có quảng cáo. Advertising ID: có, cho Analytics, Advertising or marketing, Fraud prevention.
+  - Government, Financial, Health: không.
+  - Target audience: 13–15, 16–17, 18+ (chủ dự án chọn). **Hệ quả:** ở nơi người dùng 13–15 được coi là trẻ em, app phải theo chính sách Families khi trẻ dùng: chỉ quảng cáo phù hợp trẻ em từ mạng được Play chứng nhận (AdMob đạt), tuân thủ COPPA/GDPR. Chưa làm gì trong mã cho việc này (gắn cờ nội dung theo tuổi trong yêu cầu quảng cáo, hoặc màn hỏi tuổi); cần xem trước khi phát hành.
+  - Content ratings (IARC, chủ dự án đồng ý điều khoản): không có nội dung nhạy cảm, có mua hàng số. Kết quả: Everyone (Bắc Mỹ), PEGI 3, USK mọi lứa tuổi, 3+ còn lại; Brazil 14+ vì có mua hàng số.
+  - Data safety: theo hướng dẫn chính thức của AdMob. Thu thập và chia sẻ (bắt buộc, không xử lý tạm thời, mã hóa khi truyền) 4 loại: vị trí gần đúng, tương tác trong app, chẩn đoán, mã thiết bị; mục đích phân tích, quảng cáo, chống gian lận. Không có tài khoản. Câu hỏi "cho người dùng yêu cầu xóa dữ liệu" (không bắt buộc) để trống. Không khai Play Billing (giao dịch do Google Play xử lý).
+
+### Tablet và màn hình lớn (13/11/2026)
+
+Kiểm trên máy ảo `Hueno_Tablet_API_35` (Pixel Tablet, 2560×1600, Android 15). Trước khi sửa: app khóa dọc nên trên tablet chỉ hiện một dải hẹp giữa hai viền đen. Trên Android 16, app nhắm API 36 thì hệ thống còn bỏ qua khóa xoay trên màn hình rộng (sw ≥ 600dp), nên app phải chạy được ở chiều ngang.
+
+Đã sửa:
+- Manifest bỏ `screenOrientation="portrait"`, thêm `configChanges` cho xoay và đổi kích thước: xoay không tạo lại Activity, nên camera, hiệu chuẩn và ảnh đóng băng được giữ nguyên (đã kiểm: cùng PID, trạng thái đóng băng còn sau khi xoay).
+- `MainActivity` vẫn khóa dọc khi `smallestScreenWidthDp < 600` (điện thoại); khi gập hoặc mở máy gập thì cập nhật lại trong `onConfigurationChanged`. Pixel 7 ảo vẫn đứng dọc khi bị ép xoay.
+- `ColorCamera.setDisplayRotation()` báo góc xoay cho Preview và ImageAnalysis của CameraX; `CameraScreen` gọi khi đổi chiều.
+- Màn camera khi rộng và nằm ngang: khung camera bên trái, cột 420dp bên phải (thanh tiêu đề, tên màu, nút). Khung camera được chuyển chỗ bằng `movableContentOf`, nên không bị tạo lại.
+- `ReadableWidth` (Components.kt): Photo, History, màn chi tiết màu, Settings, Pro, hướng dẫn được đặt giữa ở bề rộng tối đa 720dp, nền vẫn phủ kín.
+
+Chưa kiểm:
+- Máy thật Android 16 cỡ tablet (bản API 36 chưa cài).
+- Chiều của hình xem trước khi xoay trên camera thật: cảnh giả lập của emulator không xoay theo máy nên không xác nhận được.
+- Flip4 mở ra ở màn hình ngoài.
+- Thanh tab trên tablet vẫn ở dưới, chưa đổi sang thanh bên (NavigationRail).
+
+### Ảnh store cho tablet (13/11/2026)
+
+- `store-assets/tablet/tablet-1-camera.png` … `tablet-6-history.png`: 2560×1440 (16:9), cùng 6 chú thích như bộ điện thoại. Chụp trên máy ảo Pixel Tablet ở chiều ngang (cảnh giả lập của emulator thay cho ảnh camera thật), dòng số đo gỡ lỗi tạm ẩn; các màn ảnh, chi tiết màu, lịch sử dùng ảnh bảng màu mẫu. Dựng bằng `store-assets/tools/compose.py tablet <ảnh> "<chú thích>" <ra>`.
+- Đã tải lên Play cho cả ô **7 inch** và **10 inch**, thứ tự 1 → 6, lưu nháp.
+- **Lỗi tìm thấy khi chụp, đã sửa:** trên tablet nằm ngang, đóng băng xong thì chạm vào ảnh không dời vòng ngắm, và nhãn độ tin cậy không hiện. Nguyên nhân: khối khung camera dùng `movableContentOf` trong `remember` nên giữ giá trị cũ của `frozen` và `reading`. Giờ hai giá trị này được truyền vào làm tham số. Đã kiểm: chạm ba điểm cho ba màu khác nhau.

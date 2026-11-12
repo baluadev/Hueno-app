@@ -1,6 +1,9 @@
 package com.hueno.coloridentifier.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -182,5 +185,23 @@ fun relativeTime(thenMillis: Long, nowMillis: Long): String {
         minutes < 24 * 60 -> "${minutes / 60} h ago"
         minutes < 48 * 60 -> "Yesterday"
         else -> java.text.SimpleDateFormat("MMM d", java.util.Locale.US).format(java.util.Date(thenMillis))
+    }
+}
+
+/** Widest a reading screen gets; beyond this, lines of text and rows of buttons get hard to follow. */
+private val ReadableMaxWidth = 720.dp
+
+/**
+ * Fills the screen with the theme background and centers [content] at a readable width, so
+ * tablets and unfolded phones show a column instead of stretching every row edge to edge.
+ * On phones it changes nothing.
+ */
+@Composable
+fun ReadableWidth(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(HuenoColors.Background),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Box(Modifier.widthIn(max = ReadableMaxWidth).fillMaxSize()) { content() }
     }
 }

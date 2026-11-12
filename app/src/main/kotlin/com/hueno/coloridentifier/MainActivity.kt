@@ -1,5 +1,7 @@
 package com.hueno.coloridentifier
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,13 +17,31 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.hueno.coloridentifier.ui.HuenoApp
 import com.hueno.coloridentifier.ui.splash.SplashOverlay
 
+private const val LARGE_SCREEN_DP = 600
+
 class MainActivity : ComponentActivity() {
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Folding or unfolding changes the screen class without recreating the activity.
+        requestedOrientation = if (newConfig.smallestScreenWidthDp < LARGE_SCREEN_DP) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Must run before super.onCreate: it swaps the starting theme for the app theme.
         // The system splash is removed in one cut rather than faded: the intro's first frame is
         // the same picture, so a fade would only show a dip between two identical images.
         installSplashScreen().setOnExitAnimationListener { it.remove() }
         super.onCreate(savedInstanceState)
+        // Phones stay upright: turning one sideways only gives the picture less room. Tablets and
+        // unfolded foldables may turn (Android 16 ignores the lock there anyway), and rotating does
+        // not recreate the activity, so the camera, its calibration and a frozen frame survive.
+        if (resources.configuration.smallestScreenWidthDp < LARGE_SCREEN_DP) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
         enableEdgeToEdge()
         setContent {
             // Saved across rotation, so the intro plays once per launch and not on every turn.

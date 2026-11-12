@@ -101,6 +101,8 @@ class ColorCamera(private val context: Context) {
     var frozen: Boolean = false
 
     private var camera: Camera? = null
+    private var preview: Preview? = null
+    private var analysis: ImageAnalysis? = null
     private var provider: ProcessCameraProvider? = null
     private var startedAt = 0L
 
@@ -137,7 +139,9 @@ class ColorCamera(private val context: Context) {
 
                 val preview = Preview.Builder().build().also {
                     it.surfaceProvider = previewView.surfaceProvider
+                    previewView.display?.let { display -> it.targetRotation = display.rotation }
                 }
+                this.preview = preview
                 // Color sampling needs few pixels; a small frame keeps analysis fast.
                 val analysisBuilder = ImageAnalysis.Builder()
                     .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
@@ -166,6 +170,7 @@ class ColorCamera(private val context: Context) {
                 )
                 val analysis = analysisBuilder.build()
                 analysis.setAnalyzer(analysisExecutor, ::analyze)
+                this.analysis = analysis
 
                 cameraProvider.unbindAll()
                 resetRequested = true
@@ -474,6 +479,16 @@ class ColorCamera(private val context: Context) {
                 gains?.let { "%.3f/%.3f/%.3f".format(java.util.Locale.US, it.red, it.greenEven, it.blue) },
             ),
         )
+    }
+
+    /**
+     * Tells the camera the screen turned. The activity is not recreated on rotation (so the
+     * session and its calibration survive), so the use cases must be told directly. [rotation]
+     * is a `Surface.ROTATION_*` value. Sampling is centered, so readings do not depend on it.
+     */
+    fun setDisplayRotation(rotation: Int) {
+        preview?.targetRotation = rotation
+        analysis?.targetRotation = rotation
     }
 
     /** Hides [issue] if it is still the one shown. For notices that only need a moment. */

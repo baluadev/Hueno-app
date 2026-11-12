@@ -56,7 +56,7 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     val systemDark = isSystemInDarkTheme()
     if (viewModel.showOnboarding) {
         SystemBarIcons(darkScreen = systemDark)
-        HuenoTheme { OnboardingScreen(onDone = viewModel::finishOnboarding) }
+        HuenoTheme { ReadableWidth { OnboardingScreen(onDone = viewModel::finishOnboarding) } }
         return
     }
 
@@ -122,21 +122,23 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                             onProfileLimit = viewModel::onProfileLimit,
                             onOpenSettings = viewModel::openSettings,
                         )
-                        Tab.PHOTO -> PhotoScreen(onSave = viewModel::captureFromPhoto)
+                        Tab.PHOTO -> ReadableWidth { PhotoScreen(onSave = viewModel::captureFromPhoto) }
                         Tab.HISTORY -> {
                             val captures by viewModel.captures.collectAsStateWithLifecycle()
                             val filter = viewModel.selectedCollection
-                            HistoryScreen(
-                                captures = captures.filter { filter == null || it.collection == filter },
-                                collections = collections,
-                                selectedCollection = filter,
-                                isPro = money.isPro,
-                                bannerUnitId = bannerUnitId,
-                                onOpen = viewModel::open,
-                                onSelectCollection = viewModel::selectCollection,
-                                onExport = { if (viewModel.canExport()) exportLauncher.launch(EXPORT_FILE_NAME) },
-                                onOpenPro = viewModel::openPro,
-                            )
+                            ReadableWidth {
+                                HistoryScreen(
+                                    captures = captures.filter { filter == null || it.collection == filter },
+                                    collections = collections,
+                                    selectedCollection = filter,
+                                    isPro = money.isPro,
+                                    bannerUnitId = bannerUnitId,
+                                    onOpen = viewModel::open,
+                                    onSelectCollection = viewModel::selectCollection,
+                                    onExport = { if (viewModel.canExport()) exportLauncher.launch(EXPORT_FILE_NAME) },
+                                    onOpenPro = viewModel::openPro,
+                                )
+                            }
                         }
                     }
                 }
@@ -150,18 +152,20 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     viewModel.openCapture?.let { capture ->
         BackHandler { viewModel.closeCapture() }
         HuenoTheme {
-            ResultScreen(
-                capture = capture,
-                collections = collections,
-                speaker = speaker,
-                onBack = viewModel::closeCapture,
-                onCompare = { viewModel.compareWithCamera(capture) },
-                onDelete = { viewModel.delete(capture) },
-                onRename = { viewModel.rename(capture, it) },
-                onMove = { viewModel.moveToCollection(capture, it) },
-                hexWithHash = viewModel.hexWithHash,
-                bannerUnitId = bannerUnitId,
-            )
+            ReadableWidth {
+                ResultScreen(
+                    capture = capture,
+                    collections = collections,
+                    speaker = speaker,
+                    onBack = viewModel::closeCapture,
+                    onCompare = { viewModel.compareWithCamera(capture) },
+                    onDelete = { viewModel.delete(capture) },
+                    onRename = { viewModel.rename(capture, it) },
+                    onMove = { viewModel.moveToCollection(capture, it) },
+                    hexWithHash = viewModel.hexWithHash,
+                    bannerUnitId = bannerUnitId,
+                )
+            }
         }
     }
 
@@ -169,24 +173,26 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         BackHandler { viewModel.closeSettings() }
         val feedbackSubject = stringResource(R.string.settings_feedback_subject)
         HuenoTheme {
-            SettingsScreen(
-                money = money,
-                hexWithHash = viewModel.hexWithHash,
-                versionName = BuildConfig.VERSION_NAME,
-                onHexWithHash = viewModel::changeHexWithHash,
-                onOpenPro = viewModel::openPro,
-                onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
-                onFeedback = viewModel.feedbackEmail?.let { address ->
-                    {
-                        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
-                            .putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
-                            .putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
-                        // No mail app installed is not an error worth showing; the row just does nothing.
-                        runCatching { context.startActivity(intent) }
-                    }
-                },
-                onClose = viewModel::closeSettings,
-            )
+            ReadableWidth {
+                SettingsScreen(
+                    money = money,
+                    hexWithHash = viewModel.hexWithHash,
+                    versionName = BuildConfig.VERSION_NAME,
+                    onHexWithHash = viewModel::changeHexWithHash,
+                    onOpenPro = viewModel::openPro,
+                    onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
+                    onFeedback = viewModel.feedbackEmail?.let { address ->
+                        {
+                            val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                                .putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
+                                .putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
+                            // No mail app installed is not an error worth showing; the row just does nothing.
+                            runCatching { context.startActivity(intent) }
+                        }
+                    },
+                    onClose = viewModel::closeSettings,
+                )
+            }
         }
     }
 
@@ -198,28 +204,30 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         val noVideo = stringResource(R.string.pro_watch_failed)
         val restoring = stringResource(R.string.pro_restore_checking)
         HuenoTheme {
-            ProScreen(
-                reason = reason,
-                state = money,
-                rewardedBusy = viewModel.rewardedBusy,
-                message = proMessage,
-                onClose = viewModel::closePro,
-                onBuy = {
-                    proMessage = null
-                    activity?.let { if (!viewModel.buyPro(it)) proMessage = unavailable }
-                },
-                onWatch = {
-                    activity?.let { host ->
+            ReadableWidth {
+                ProScreen(
+                    reason = reason,
+                    state = money,
+                    rewardedBusy = viewModel.rewardedBusy,
+                    message = proMessage,
+                    onClose = viewModel::closePro,
+                    onBuy = {
                         proMessage = null
-                        viewModel.watchRewarded(host) { ok -> proMessage = if (ok) granted else noVideo }
-                    }
-                },
-                onRestore = {
-                    proMessage = restoring
-                    viewModel.restorePurchases()
-                },
-                onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
-            )
+                        activity?.let { if (!viewModel.buyPro(it)) proMessage = unavailable }
+                    },
+                    onWatch = {
+                        activity?.let { host ->
+                            proMessage = null
+                            viewModel.watchRewarded(host) { ok -> proMessage = if (ok) granted else noVideo }
+                        }
+                    },
+                    onRestore = {
+                        proMessage = restoring
+                        viewModel.restorePurchases()
+                    },
+                    onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
+                )
+            }
         }
     }
 }

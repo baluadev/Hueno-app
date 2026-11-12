@@ -92,9 +92,28 @@ def feature(icon_svg_png, screen, out):
     c = c.convert('RGB')
     c.save(out, optimize=True)
 
+def tablet_screenshot(src, caption, out, top=48, bottom=1536):
+    """16:9 landscape tablet screenshot (2560x1440): caption on top, the tablet below it.
+
+    [src] is a full capture from a 2560x1600 tablet; the status bar and the gesture bar are
+    cropped off, the app UI is untouched.
+    """
+    W, H = 2560, 1440
+    c = background(W, H)
+    d = ImageDraw.Draw(c)
+    f = font(84)
+    d.text((W // 2, 64), caption.replace('|', ' '), font=f, fill=ON_INK, anchor='ma')
+    shot = Image.open(src).convert('RGB').crop((0, top, 2560, bottom))
+    ph = phone(shot, H - 300, radius=36, bezel=16)
+    paste_with_shadow(c, ph, ((W - ph.width) // 2, 190), blur=50, offset=26)
+    c.convert('RGB').save(out, optimize=True)
+
+
 if __name__ == '__main__':
     kind = sys.argv[1]
-    if kind == 'shot':
+    if kind == 'tablet':
+        tablet_screenshot(sys.argv[2], sys.argv[3], sys.argv[4])
+    elif kind == 'shot':
         screenshot(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         feature(sys.argv[2], sys.argv[3], sys.argv[4])
