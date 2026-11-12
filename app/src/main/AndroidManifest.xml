@@ -11,6 +11,20 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${adMobAppId}" />
+        <!-- Firebase Analytics is used only to count app usage. It does not collect the advertising
+             ID and its data is not used for ads or ad personalization; see hueno.pages.dev/privacy. -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_user_data"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|density"

@@ -23,6 +23,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,12 @@ import com.hueno.coloridentifier.ui.settings.SettingsScreen
 
 @Composable
 fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
+    // Banners anywhere below report paid impressions to the same place as rewarded videos.
+    CompositionLocalProvider(LocalAdPaid provides viewModel::onBannerPaid) { HuenoAppContent(viewModel) }
+}
+
+@Composable
+private fun HuenoAppContent(viewModel: HuenoViewModel) {
     // Screens follow the system's light or dark setting. The camera is always dark, so the preview
     // is not framed by bright glare and the eye judges its colors against a neutral dark surround.
     val systemDark = isSystemInDarkTheme()
@@ -72,12 +79,22 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
 
     LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
 
+    // The screen in front, for usage counts. Overlays cover the tabs, so they win.
+    val screenName = when {
+        viewModel.proScreen != null -> "pro"
+        viewModel.showSettings -> "settings"
+        viewModel.openCapture != null -> "color_detail"
+        else -> tab.name.lowercase()
+    }
+    LaunchedEffect(screenName) { viewModel.tracker.screen(screenName) }
+
     // Messages for the Pro screen. Kept here so a purchase that completes after the screen was
     // closed is still announced, as a toast.
     var proMessage by remember { mutableStateOf<String?>(null) }
     val appContext = LocalContext.current.applicationContext
     LaunchedEffect(Unit) {
         viewModel.billingEvents.collect { event ->
+            viewModel.tracker.billing(event.name.lowercase())
             val text = appContext.getString(event.messageRes())
             if (viewModel.proScreen != null) proMessage = text
             else Toast.makeText(appContext, text, Toast.LENGTH_LONG).show()

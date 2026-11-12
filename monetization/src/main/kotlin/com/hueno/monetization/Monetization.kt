@@ -71,7 +71,17 @@ class Monetization(context: Context, val config: MonetizationConfig) {
         onEvent = { event -> _billingEvents.tryEmit(event) },
     )
 
-    private val ads = AdsController(context, config.rewardedUnitId) { refresh() }
+    /**
+     * Receives every paid ad impression, rewarded videos from here and banners from the app
+     * through [reportAdPaid]. Set by the app to forward revenue to analytics.
+     */
+    @Volatile
+    var onAdPaid: (AdRevenue) -> Unit = {}
+
+    private val ads = AdsController(context, config.rewardedUnitId, onChanged = { refresh() }, onPaid = { onAdPaid(it) })
+
+    /** For ad formats the app shows itself, such as banners. */
+    fun reportAdPaid(revenue: AdRevenue) = onAdPaid(revenue)
 
     /** Number of this app start, counted from 1. Ads are held back during the first one. */
     val session: Int

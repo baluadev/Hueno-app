@@ -19,6 +19,7 @@ import com.hueno.core.color.Rgb
 import com.hueno.data.CaptureCsv
 import com.hueno.data.CaptureRepository
 import com.hueno.data.StoredCapture
+import com.hueno.monetization.AdRevenue
 import com.hueno.monetization.BillingEvent
 import com.hueno.monetization.Monetization
 import com.hueno.monetization.MonetizationConfig
@@ -81,6 +82,9 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = CaptureRepository(application)
     private val prefs = application.getSharedPreferences("hueno", Context.MODE_PRIVATE)
 
+    /** Usage counts for Firebase Analytics; see [Tracker] for what is and is not sent. */
+    val tracker = Tracker(application)
+
     private val monetization = Monetization(
         application,
         MonetizationConfig(
@@ -89,6 +93,14 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
             rewardedUnitId = BuildConfig.AD_REWARDED_UNIT_ID,
         ),
     )
+
+    init {
+        // Rewarded videos report from the monetization module; banners through [onBannerPaid].
+        monetization.onAdPaid = { tracker.adPaid(it) }
+    }
+
+    /** Revenue from a banner the app showed. */
+    fun onBannerPaid(revenue: AdRevenue) = monetization.reportAdPaid(revenue)
 
     /** Pro, pass, price and ad state. */
     val money: StateFlow<MonetizationState> = monetization.state
@@ -169,6 +181,7 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     fun finishOnboarding() {
         prefs.edit().putBoolean(KEY_ONBOARDING_DONE, true).apply()
         showOnboarding = false
+        tracker.onboardingDone()
     }
 
     /**
@@ -195,14 +208,22 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     fun captureFromCamera(reading: ColorReading, picture: Bitmap?) =
         save(reading.rgb, false, reading.confidence, reading.calibrated, picture)
 
+    /** Opens the Pro screen and records why. */
+    private fun showPro(reason: ProReason) {
+        proScreen = reason
+        if (reason != ProReason.MENU) tracker.limitReached(reason.name.lowercase())
+        tracker.proScreen(reason.name.lowercase())
+    }
+
     fun captureFromPhoto(rgb: Rgb, picture: Bitmap?) = save(rgb, true, null, false, picture)
 
     /** Saves the color and opens it, or opens the Pro screen when the free limit is reached. */
     private fun save(rgb: Rgb, fromPhoto: Boolean, confidence: Confidence?, calibrated: Boolean, picture: Bitmap?) {
         if (!monetization.canSave(captures.value.size)) {
-            proScreen = ProReason.HISTORY_LIMIT
+            showPro(ProReason.HISTORY_LIMIT)
             return
         }
+        tracker.colorSaved(fromPhoto, ColorNamer.name(rgb).family.label, calibrated, confidence?.level?.name?.lowercase())
         viewModelScope.launch {
             openCapture = repository.add(rgb, fromPhoto, confidence, calibrated, picture).toCapture()
         }
@@ -225,7 +246,7 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     fun canSaveProfile(savedCount: Int): Boolean = monetization.canSaveProfile(savedCount)
 
     fun onProfileLimit() {
-        proScreen = ProReason.PROFILE_LIMIT
+        showPro(ProReason.PROFILE_LIMIT)
     }
 
     fun delete(capture: Capture) {
@@ -248,7 +269,7 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     /** True when the user may export; otherwise opens the Pro screen, since export is a Pro feature. */
     fun canExport(): Boolean {
         if (money.value.isPro) return true
-        proScreen = ProReason.EXPORT
+        showPro(ProReason.EXPORT)
         return false
     }
 
@@ -271,6 +292,7 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
                     false
                 }
             }
+            tracker.export(ok)
             onDone(ok)
         }
     }
@@ -281,24 +303,26 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
             compareReference = null
         } else if (monetization.tryStartCompare()) {
             compareReference = rgb
+            tracker.compareStarted("camera")
         } else {
-            proScreen = ProReason.COMPARE_LIMIT
+            showPro(ProReason.COMPARE_LIMIT)
         }
     }
 
     /** Uses a saved color as color A and goes to the camera to point at color B. */
     fun compareWithCamera(capture: Capture) {
         if (!monetization.tryStartCompare()) {
-            proScreen = ProReason.COMPARE_LIMIT
+            showPro(ProReason.COMPARE_LIMIT)
             return
         }
+        tracker.compareStarted("saved_color")
         compareReference = capture.rgb
         openCapture = null
         tab = Tab.CAMERA
     }
 
     fun openPro() {
-        proScreen = ProReason.MENU
+        showPro(ProReason.MENU)
     }
 
     fun closePro() {
@@ -316,6 +340,7 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
         rewardedBusy = true
         monetization.watchRewarded(activity) { granted ->
             rewardedBusy = false
+            tracker.rewarded(granted)
             onResult(granted)
         }
     }

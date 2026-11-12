@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 // Upload key for release builds. Kept outside the repository; never commit it. The default path
@@ -100,6 +101,8 @@ dependencies {
     implementation(project(":camera"))
     implementation(project(":data"))
     implementation(project(":monetization"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 

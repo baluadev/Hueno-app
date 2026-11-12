@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "826027939849",
+    "project_id": "hueno-color",
+    "storage_bucket": "hueno-color.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826027939849:android:fa5b9a0b646de5194dc0d8",
+        "android_client_info": {
+          "package_name": "com.hueno.coloridentifier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_Lo00a7TVWs3_yaCIy3iw9tW13f5glJg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

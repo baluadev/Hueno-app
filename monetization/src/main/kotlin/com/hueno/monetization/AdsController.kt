@@ -26,6 +26,8 @@ internal class AdsController(
     context: Context,
     private val rewardedUnitId: String,
     private val onChanged: () -> Unit,
+    /** Called on the main thread for every paid rewarded impression. */
+    private val onPaid: (AdRevenue) -> Unit = {},
 ) {
     private val appContext = context.applicationContext
     private val consent: ConsentInformation = UserMessagingPlatform.getConsentInformation(appContext)
@@ -103,6 +105,9 @@ internal class AdsController(
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
+                    ad.setOnPaidEventListener { value ->
+                        onPaid(AdRevenue.from("rewarded", rewardedUnitId, value, ad.responseInfo))
+                    }
                     rewarded = ad
                     rewardedLoading = false
                     onChanged()

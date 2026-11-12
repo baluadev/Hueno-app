@@ -418,3 +418,16 @@ Chưa kiểm:
 **Phát hiện, cần chủ dự án làm trong AdMob:** bản release báo lỗi UMP "no form(s) configured for the input app ID". AdMob chưa có thông điệp đồng ý cho app này, nên `canRequestAds()` trả false và app **không bao giờ hiện quảng cáo**. Cần vào AdMob > Privacy & messaging, tạo thông điệp GDPR (và nên tạo cả thông điệp cho các bang Mỹ) cho app `ca-app-pub-8681872943360035~2789069929`, rồi xuất bản.
 
 Còn lại: thêm người thử nghiệm (email) vào Internal testing rồi phát hành để thử mua thật; khi phát hành chính thức thì tăng `versionCode`.
+
+### Firebase Analytics (13/11/2026, chưa commit)
+
+- Dự án Firebase `hueno-color`; `app/google-services.json` (API key trong file không phải bí mật, chỉ dùng cho app này). Firebase BoM 34.0.0, `firebase-analytics` 23.0.0, plugin `com.google.gms.google-services` 4.4.3.
+- Riêng tư (manifest): tắt thu mã quảng cáo (`google_analytics_adid_collection_enabled=false`); consent mode mặc định từ chối `ad_storage`, `ad_user_data`, `ad_personalization_signals`. Dữ liệu chỉ dùng để đếm cách dùng app.
+- `ui/Tracker.kt` ghi: `screen_view` (camera, photo, history, color_detail, settings, pro), `tutorial_complete`, `color_saved` (source, family, calibrated, confidence), `compare_start` (source), `limit_reached` (reason), `pro_screen` (reason), `pro_billing` (kết quả), `rewarded_video` (granted), `export_csv` (ok). **Không** gửi mã màu, tên tự đặt, bộ sưu tập hay ảnh.
+- Đã kiểm trên máy ảo bằng chế độ debug (`adb shell setprop debug.firebase.analytics.app com.hueno.coloridentifier`, xem trong Firebase > DebugView): sự kiện ghi đúng và tải lên thành công (HTTP 204); consent đọc từ manifest đúng như cấu hình.
+- Chính sách trên website (nhánh `website`, `privacy.html`) đã được sửa để kể Firebase Analytics, ngày hiệu lực 13/11/2026. **Phải đẩy bản này trước khi phát hành app.**
+- Data safety trên Play không cần đổi: bốn loại dữ liệu đã khai đều có mục đích Analytics. Nếu sau này thêm Crashlytics thì phải khai thêm Crash logs.
+- `app-ads.txt` trên https://hueno.pages.dev/app-ads.txt đã chạy (HTTP 200).
+- **Doanh thu quảng cáo** (`ad_impression_scaled`, giống các app khác của studio): `OnPaidEventListener` gắn vào banner (`AdBanner`, nối qua `LocalAdPaid`) và video thưởng (`AdsController`). `AdRevenue.from()` đổi `AdValue` (micros) ra tiền, lấy mạng nguồn từ `ResponseInfo.loadedAdapterResponseInfo.adSourceName`. `AdRevenue.scaledValue()`: nhân 100, bỏ nếu dưới 0,01, chặn trần 25 (có unit test). Tham số: `ad_platform=AdMob`, `ad_source`, `ad_unit_name`, `ad_format` (banner/rewarded), `value`, `currency` (tiền tệ của tài khoản AdMob, không phải lúc nào cũng USD), `precision`.
+- Đã thấy listener của banner chạy trên máy ảo với quảng cáo thử; quảng cáo thử báo 0 USD nên sự kiện bị bỏ đúng như quy tắc. Chưa thấy sự kiện có giá trị thật (cần quảng cáo thật, mà AdMob chưa có form đồng ý).
+- Chính sách trên `site/privacy.html` đã thêm câu về sự kiện doanh thu quảng cáo (vẫn chưa đẩy).
