@@ -8,6 +8,18 @@
     <string name="back">Back</string>
     <string name="close">Close</string>
 
+    <!-- First run -->
+    <string name="onboarding_title">Know what color it is</string>
+    <string name="onboarding_subtitle">Three things to know. It takes ten seconds.</string>
+    <string name="onboarding_step1_title">Point at anything</string>
+    <string name="onboarding_step1_body">The name appears in plain words, like \"Dark blue\".</string>
+    <string name="onboarding_step2_title">Tap the round button to keep it</string>
+    <string name="onboarding_step2_body">The color is saved with its name and hex code.</string>
+    <string name="onboarding_step3_title">Calibrate with white paper</string>
+    <string name="onboarding_step3_body">Indoor light shifts colors. One tap corrects it, and Hueno tells you when a reading is shaky.</string>
+    <string name="onboarding_start">Open the camera</string>
+    <string name="onboarding_note">Hueno asks for camera access next. Frames stay on your phone.</string>
+
     <!-- Camera permission -->
     <string name="permission_title">Camera access</string>
     <string name="permission_body">Hueno uses the camera to read colors. Frames are analyzed on this phone and never leave it.</string>

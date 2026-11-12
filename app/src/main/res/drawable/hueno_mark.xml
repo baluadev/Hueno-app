@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The full icon with its dark tile, for use inside the app. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="#12141A"
+        android:pathData="M112,0 H400 A112,112 0 0 1 512,112 V400 A112,112 0 0 1 400,512 H112 A112,112 0 0 1 0,400 V112 A112,112 0 0 1 112,0 Z" />
+    <path
+        android:fillColor="#F5B301"
+        android:pathData="M132,318 L104,424 L206,378 Z" />
+    <path
+        android:pathData="M256,104 A132,132 0 0 1 388,236"
+        android:strokeColor="#3D6BF2"
+        android:strokeWidth="52" />
+    <path
+        android:pathData="M388,236 A132,132 0 0 1 256,368"
+        android:strokeColor="#1DB8A6"
+        android:strokeWidth="52" />
+    <path
+        android:pathData="M256,368 A132,132 0 0 1 124,236"
+        android:strokeColor="#F5B301"
+        android:strokeWidth="52" />
+    <path
+        android:pathData="M124,236 A132,132 0 0 1 256,104"
+        android:strokeColor="#F2603D"
+        android:strokeWidth="52" />
+    <path
+        android:fillColor="#F6F4EF"
+        android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+</vector>

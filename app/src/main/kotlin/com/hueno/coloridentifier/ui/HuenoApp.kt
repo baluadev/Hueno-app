@@ -1,5 +1,6 @@
 package com.hueno.coloridentifier.ui
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -13,24 +14,36 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.camera.CameraScreen
 import com.hueno.coloridentifier.ui.history.HistoryScreen
+import com.hueno.coloridentifier.ui.onboarding.OnboardingScreen
 import com.hueno.coloridentifier.ui.photo.PhotoScreen
 import com.hueno.coloridentifier.ui.result.ResultScreen
 
 @Composable
 fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
+    if (viewModel.showOnboarding) {
+        SystemBarIcons(darkScreen = false)
+        HuenoTheme(dark = false) { OnboardingScreen(onDone = viewModel::finishOnboarding) }
+        return
+    }
+
     val tab = viewModel.tab
     val dark = tab != Tab.HISTORY
     val speaker = rememberSpeaker()
+    // The detail screen is light and covers the whole window while it is open.
+    SystemBarIcons(darkScreen = dark && viewModel.openCapture == null)
 
     HuenoTheme(dark = dark) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -67,6 +80,20 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                 onCompare = { viewModel.compareWithCamera(capture) },
                 onDelete = { viewModel.delete(capture) },
             )
+        }
+    }
+}
+
+/** Keeps status and navigation bar icons readable: light icons on dark screens and the reverse. */
+@Composable
+private fun SystemBarIcons(darkScreen: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    SideEffect {
+        val window = (view.context as? Activity)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkScreen
+            isAppearanceLightNavigationBars = !darkScreen
         }
     }
 }

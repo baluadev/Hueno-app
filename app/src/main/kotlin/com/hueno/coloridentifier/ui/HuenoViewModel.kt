@@ -1,6 +1,7 @@
 package com.hueno.coloridentifier.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -49,6 +50,16 @@ private fun StoredCapture.toCapture() = Capture(
 class HuenoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = CaptureRepository(application)
+    private val prefs = application.getSharedPreferences("hueno", Context.MODE_PRIVATE)
+
+    /** True until the first-run guide has been dismissed once. */
+    var showOnboarding by mutableStateOf(!prefs.getBoolean(KEY_ONBOARDING_DONE, false))
+        private set
+
+    fun finishOnboarding() {
+        prefs.edit().putBoolean(KEY_ONBOARDING_DONE, true).apply()
+        showOnboarding = false
+    }
 
     var tab by mutableStateOf(Tab.CAMERA)
         private set
@@ -103,5 +114,9 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
         compareReference = capture.rgb
         openCapture = null
         tab = Tab.CAMERA
+    }
+
+    private companion object {
+        const val KEY_ONBOARDING_DONE = "onboarding_done"
     }
 }
