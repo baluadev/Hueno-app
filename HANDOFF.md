@@ -338,3 +338,35 @@ Chủ dự án báo icon trên màn hình chính bị lệch. Đo được hai v
 ### Mã AdMob thật (12/11/2026 tối, chưa commit)
 
 Chủ dự án cung cấp mã AdMob thật. Bản **release** giờ dùng app `ca-app-pub-8681872943360035~2789069929`, banner `…/6803356613`, video có thưởng `…/6420213231`. Bản **debug** vẫn dùng mã thử của Google, để không xem hay bấm quảng cáo thật trên máy của nhóm. Chi tiết và cách ghi đè: mục 7 của `tech-architecture.md`. Đã kiểm `BuildConfig` và manifest sau khi gộp của từng bản. Bản release đầy đủ vẫn chưa build được vì chưa có cấu hình ký (vấn đề 6). Vấn đề 28 (mã AdMob thật) đã xong phần quảng cáo; còn sản phẩm Pro trên Play Console.
+
+### Tạo app trên Play Console (12/11/2026 tối)
+
+Tài khoản nhà phát triển **Dragon LLC** (tài khoản cá nhân, `dragonkart.dev@gmail.com`, Chrome profile "Dragon"). Mã app trên Console: `4972917849939936693`.
+
+Đã làm:
+- Tạo app "Hueno: Color Identifier & Name". **Tên gói `com.hueno.coloridentifier` đã khóa vĩnh viễn** theo quyết định của chủ dự án, dù chưa tra nhãn hiệu. Ngôn ngữ mặc định en-US, loại App, miễn phí. Chủ dự án đồng ý tích hai cam kết (Developer Program Policies, luật xuất khẩu Mỹ). Automatic protection giữ mặc định (bật).
+- Store listing mặc định (lưu nháp): tên, mô tả ngắn (80/80) và mô tả dài (3075/4000) lấy nguyên văn từ `hueno-aso.md`; icon 512 mới.
+- `hueno-icon.svg` và `hueno-icon-512.png` được làm lại theo logo đã căn (dịch +7, +11; phóng 1,08), PNG 32-bit RGBA.
+- Store settings: danh mục Tools; thẻ Art & design, Camera, Interior design, Measurement. Play không có thẻ về màu sắc hay trợ năng.
+- App content: Ads = có quảng cáo.
+
+Còn thiếu trước khi gửi duyệt:
+- Feature graphic 1024×500 và tối thiểu 2 ảnh chụp điện thoại (chưa có file; ảnh trên Flip4 là 1080×2640, vượt tỉ lệ tối đa 2:1 của Play nên phải cắt hoặc dựng khung).
+- Email liên hệ công khai (bắt buộc), có thể thêm website.
+- Chính sách quyền riêng tư có đường dẫn công khai, Data safety, xếp hạng nội dung, đối tượng mục tiêu, và các mục khác trong App content (10 mục, mới xong Ads).
+- Sản phẩm `pro_lifetime`: Play chỉ cho tạo sản phẩm mua trong app sau khi đã tải lên một bản build có Play Billing, nên cần cấu hình ký và bản release trước.
+- Mô tả dài có câu "Works with TalkBack and large text": chưa kiểm chữ lớn và chưa nghe TalkBack thật (vấn đề 25). Phải kiểm hoặc bỏ câu này trước khi gửi duyệt.
+
+### Hình ảnh store và email liên hệ (12/11/2026 tối)
+
+- Email liên hệ công khai: `dragonkart.dev@gmail.com` (đã lưu trong Store settings).
+- `store-assets/` chứa ảnh đã tải lên Play và công cụ dựng ảnh:
+  - `feature-graphic-camera-1024x500.png`: logo, "Hueno", "Point. Know the color.", và màn camera đang đọc quả bông đỏ.
+  - `screenshot-1-camera.png` … `screenshot-6-history.png`: đủ 6 ảnh 1080×1920, chú thích theo `hueno-aso.md` mục 4. Ảnh màn hình là ảnh chụp thật trên Flip4, chỉ cắt bỏ thanh trạng thái và thanh điều hướng của hệ thống.
+  - `sample-swatches-source.jpg`: ảnh bảng màu mẫu tự tạo, dùng cho màn chọn màu từ ảnh (không dùng ảnh riêng của ai). Ảnh này cũng nằm trên máy ở `/sdcard/Pictures/Hueno/`.
+  - `tools/compose.py`: script dựng ảnh. Font Roboto (Apache 2.0) lấy từ `/system/fonts/` của máy Android.
+- Cách chụp: build debug với dòng số đo gỡ lỗi tạm ẩn (đổi `if (BuildConfig.DEBUG) DebugLine(state)` thành `if (false && …)`, không commit), chế độ sáng, đang có Pro để không có banner.
+- Đã tải lên store listing (lưu nháp): feature graphic bản camera và đủ 6 ảnh theo thứ tự 1 → 6 (camera, tên màu, so màu, hiệu chuẩn, ảnh, lịch sử). Ảnh 1, 3, 4 chụp lúc 22:41–22:46 dưới đèn trần, chủ dự án cầm máy. Feature graphic cũ (bản ảnh bảng màu) vẫn còn trong thư viện tài nguyên của Play nhưng không dùng.
+- Trên Play Console, muốn đổi thứ tự ảnh thì gỡ khỏi ô rồi thêm lại từ thư viện theo thứ tự mong muốn; tải nhiều ảnh cùng lúc thì thứ tự không theo tên file.
+
+Vấn đề tìm thấy khi chụp: màu đỏ #B22335 có "Closest named shade: Brown", vì tên CSS "brown" (#A52A2A) thực ra là một màu đỏ đậm. Người đọc sẽ thấy "Red… Brown" và nghĩ app gọi sai. Nên bỏ hoặc đổi tên các màu CSS gây hiểu nhầm (brown, maroon…) trong `NamedColors` cho họ màu đỏ.
