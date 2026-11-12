@@ -1,6 +1,12 @@
 package com.hueno.coloridentifier.ui.camera
 
 import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,6 +49,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +75,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hueno.camera.CalibrationProfile
@@ -112,12 +122,27 @@ fun CameraScreen(
     onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
-    var granted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED,
-        )
+    val lifecycleOwner = LocalLifecycleOwner.current
+    fun hasCamera() =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    var granted by remember { mutableStateOf(hasCamera()) }
+    // After a refusal Android may stop showing its dialog. Only then does the button lead to the
+    // app's system settings, because that is the one place left to turn the camera on.
+    var blocked by rememberSaveable { mutableStateOf(false) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        granted = ok
+        val activity = context.findActivity()
+        blocked = !ok && activity != null &&
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.CAMERA)
     }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
+    // Picks up a permission turned on in system settings when the user comes back.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && !granted && hasCamera()) granted = true
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     if (granted) {
         LiveCamera(speaker, compareReference, onCompareReference, onCapture, canSaveProfile, onProfileLimit, onOpenSettings)
@@ -130,20 +155,36 @@ fun CameraScreen(
                 stringResource(R.string.permission_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
+                color = HuenoColors.OnInk,
             )
             Text(
-                stringResource(R.string.permission_body),
+                stringResource(if (blocked) R.string.permission_blocked_body else R.string.permission_body),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = HuenoColors.OnInkMuted,
             )
             Button(
-                onClick = { launcher.launch(Manifest.permission.CAMERA) },
+                onClick = {
+                    if (blocked) {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null),
+                        )
+                        runCatching { context.startActivity(intent) }
+                    } else {
+                        launcher.launch(Manifest.permission.CAMERA)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = HuenoColors.Action,
                     contentColor = HuenoColors.OnAction,
                 ),
-            ) { Text(stringResource(R.string.permission_allow), fontSize = 17.sp) }
+            ) {
+                Text(
+                    stringResource(if (blocked) R.string.permission_open_settings else R.string.permission_allow),
+                    fontSize = 17.sp,
+                )
+            }
         }
     }
 }
@@ -192,9 +233,29 @@ private fun LiveCamera(
         frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, size.radiusFraction))
     }
 
+    /** Drops the calibration for [reason] and re-reads a frozen spot without it. */
+    fun dropCalibration(reason: CameraIssue) {
+        if (!camera.isCalibrated) return
+        camera.clearCalibration(reason)
+        frozenFrame?.let { frozenReading = camera.readingFromPixels(pixelsAround(it, ring, size.radiusFraction)) }
+    }
+
     DisposableEffect(lifecycleOwner) {
         camera.start(lifecycleOwner, previewView)
-        onDispose { camera.shutdown() }
+        // The camera is closed while the app is in the background, and the light may well have
+        // changed by the time it is back, so a calibration is not trusted across that gap.
+        // The torch goes off with the camera too.
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                dropCalibration(CameraIssue.CALIBRATION_CLEARED_PAUSED)
+                torch = false
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            camera.shutdown()
+        }
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -204,6 +265,8 @@ private fun LiveCamera(
             onTorch = {
                 torch = !torch
                 camera.setTorch(torch)
+                // The torch changes the light the calibration was measured under.
+                dropCalibration(CameraIssue.CALIBRATION_CLEARED_TORCH)
             },
             onCalibrate = { calibrating = true },
             onSettings = onOpenSettings,
@@ -259,18 +322,24 @@ private fun LiveCamera(
                     drawCircle(Color.White, 3f, center)
                 }
             }
-            ConfidenceChip(reading, frozen, Modifier.align(Alignment.TopStart).padding(12.dp))
-            SizeSelector(
-                selected = size,
-                onSelect = {
-                    size = it
-                    camera.sampleSize = it
-                    frozenFrame?.let { frame ->
-                        frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, it.radiusFraction))
-                    }
-                },
-                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-            )
+            // One row, so a long chip wraps onto a second line instead of sliding under the selector.
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                ConfidenceChip(reading, frozen, Modifier.weight(1f, fill = false).padding(end = 8.dp))
+                SizeSelector(
+                    selected = size,
+                    onSelect = {
+                        size = it
+                        camera.sampleSize = it
+                        frozenFrame?.let { frame ->
+                            frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, it.radiusFraction))
+                        }
+                    },
+                )
+            }
         }
 
         if (calibrating) {
@@ -385,11 +454,21 @@ private fun pixelsAround(frame: Bitmap, spot: Offset, radiusFraction: Double): I
     return out.toIntArray()
 }
 
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
 private fun CameraIssue.messageRes(): Int = when (this) {
     CameraIssue.START_FAILED -> R.string.camera_issue_start
     CameraIssue.LOCK_REJECTED -> R.string.camera_issue_lock
     CameraIssue.CALIBRATION_FAILED -> R.string.camera_issue_calibration
+    CameraIssue.CALIBRATION_TOO_BRIGHT -> R.string.camera_issue_calibration_bright
+    CameraIssue.CALIBRATION_TOO_DARK -> R.string.camera_issue_calibration_dark
     CameraIssue.PROFILE_FAILED -> R.string.camera_issue_profile
+    CameraIssue.CALIBRATION_CLEARED_PAUSED -> R.string.camera_issue_cleared_paused
+    CameraIssue.CALIBRATION_CLEARED_TORCH -> R.string.camera_issue_cleared_torch
 }
 
 @Composable
@@ -671,15 +750,15 @@ private fun CalibrationPanel(
             Text(stringResource(R.string.profile_unsupported), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f).height(48.dp)) {
-                Text(stringResource(R.string.calibrate_close), color = HuenoColors.OnInk)
+        // Stacked rather than side by side: "Clear calibration" does not fit half a narrow phone,
+        // and grows further with large text.
+        if (calibrated) {
+            OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.calibrate_clear), color = HuenoColors.OnInk)
             }
-            if (calibrated) {
-                OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f).height(48.dp)) {
-                    Text(stringResource(R.string.calibrate_clear), color = HuenoColors.OnInk)
-                }
-            }
+        }
+        OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.calibrate_close), color = HuenoColors.OnInk)
         }
     }
 }

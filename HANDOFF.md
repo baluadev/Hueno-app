@@ -197,3 +197,61 @@ Nếu bài 4 không đạt, lời hứa "hiệu chuẩn" phải thu hẹp trư�
 37. Trên Android dưới 12, splash hệ thống vẽ icon ở kích thước khác, nên có thể có một nhịp nhảy kích thước khi vào hiệu ứng. Chưa thử.
 
 Thêm vào kế hoạch thử: quan sát lần mở app nguội, xem hiệu ứng có mượt không và mất bao lâu từ lúc chạm icon đến lúc thấy tên màu.
+
+### Sửa mã và lần thử đầu trên máy thật (12/11/2026, chưa commit)
+
+Thiết bị: Samsung Galaxy Z Flip4 (`SM-F721B`, mã `adb` `R5CTC0XWBTY`), Android 16 (API 36). Máy có hai màn hình, nên chụp màn hình phải chỉ định màn hình chính: `adb exec-out screencap -p -d 4630946784334733698`.
+
+Thư mục làm việc mới là `/Users/tampham/Documents/github/hueno-app`. File `local.properties` (đã nằm trong `.gitignore`) trỏ tới `~/Library/Android/sdk`.
+
+Mã đã sửa:
+- Khóa hướng dọc trong manifest (vấn đề 7).
+- Xóa hiệu chuẩn khi app ra nền (`ON_STOP`) và khi bật hoặc tắt đèn flash, kèm câu báo cho người dùng (vấn đề 8, 9). `ColorCamera.clearCalibration(reason)`, hai giá trị mới `CameraIssue.CALIBRATION_CLEARED_*`. Đèn flash trong giao diện cũng tự tắt khi app ra nền.
+- Bị từ chối quyền camera vĩnh viễn thì nút đổi thành "Open settings", mở trang cài đặt của app; quay lại app sẽ tự nhận quyền (vấn đề 15).
+- `BillingEvent` trong `:monetization`: báo mua xong, đang chờ thanh toán, mua lỗi, khôi phục được, không có gì để khôi phục, không kết nối được Play. Hiện trên màn hình Pro (vùng TalkBack tự đọc), hoặc bằng toast nếu màn hình Pro đã đóng (vấn đề 16).
+- `Speaker` giữ lại câu được yêu cầu khi bộ đọc chưa sẵn sàng và đọc ngay khi sẵn sàng; báo bằng toast nếu máy không đọc được tiếng Anh (vấn đề 17).
+- Ba lỗi giao diện thấy trên máy thật: tiêu đề "Camera access" màu đen trên nền tối; nhãn "Good reading · Calibrated" bị nút S/M/L che; nút "Clear calibration" bị xuống dòng và mất chữ. Đã sửa cả ba.
+
+Kết quả thử trên Flip4 (qua `adb`, chĩa vào bức tường trong phòng, chưa có giấy trắng):
+| Bài | Kết quả |
+|---|---|
+| 1 Tốc độ | Activity khởi động 636 ms; `first` 456–565 ms; 30 fps. Đạt. |
+| Hồ sơ | `profiles yes`. Lưu hồ sơ "Desk", mở lại app, dùng hồ sơ: tường đọc White #F2F1F1, `locked yes`, khớp lúc vừa hiệu chuẩn (#F1F2F2). Đạt. |
+| 6 Vật không trắng | Lần đầu không đạt: tường xám nhạt (#B6B3AE) được nhận làm trắng. Sau khi siết ngưỡng (xem dưới): cốc xanh nhạt, điều khiển có chữ, gỗ đều bị từ chối; tường xám vẫn được nhận (không thể phân biệt bằng số đo). |
+| 8 Ra nền | Sau sửa: hiệu chuẩn bị xóa, hiện câu báo, `locked no`. |
+| 9 Xoay | Ép hệ thống xoay ngang, app vẫn ở `ROTATION_0`. |
+| Flash | Bật đèn flash xóa hiệu chuẩn và hiện câu báo. |
+| 13 Đọc to | `com.google.android.tts` phát âm thanh loại `SPEECH`. Chưa nghe bằng tai. |
+| Quyền camera | Từ chối hẳn (đặt bằng `pm`), sau đó "Open settings", rồi cấp quyền và quay lại: camera tự bật. |
+| Khôi phục | "No Pro purchase was found for this Google account." Nút mua báo không có sản phẩm, đúng vì chưa có `pro_lifetime` trên Play Console. |
+| Crash | Không có crash nào trong cả phiên. |
+
+Chưa thử: bài 2–5, 10–12, 14, 15 (cần người cầm máy, giấy trắng, đèn vàng); mua thật; hộp thoại đồng ý quảng cáo. Ở lần mở đầu, hộp thoại quyền lần thứ hai đổi bố cục nên `adb` chạm nhầm nút cho phép; khi tự động hóa, hãy đọc tọa độ bằng `uiautomator dump`, đừng dùng tọa độ cũ.
+
+### Siết ngưỡng vật trắng (12/11/2026, chưa commit)
+
+Mỗi lần bấm Calibrate, `ColorCamera` ghi một dòng `calibrate ref r= g= b= ratio= ringLum= sceneLum= spread= clipped=` vào logcat (thẻ `ColorCamera`). Đọc bằng `adb logcat -d | grep "calibrate ref"`.
+
+Số đo trên Flip4, ánh sáng trong phòng (ratio = kênh mạnh nhất / kênh yếu nhất, độ loang = spread / ringLum):
+| Vật | ratio | ringLum | độ loang |
+|---|---|---|---|
+| Giấy trắng, cân bằng trắng đã tự chỉnh trên giấy | 1,01–1,13 | 0,42–0,53 | 0,01–0,02 |
+| Giấy trắng, gần đèn vàng (ngả vàng rõ trên màn hình) | 1,03–1,37 | 0,59–0,80 | 0,01 |
+| Giấy trắng, sát đèn vàng (cháy sáng, kênh đỏ = 1,0) | ≥ 1,31 | 0,92 | 0,02 |
+| Tường xám nhạt | 1,08 | 0,52 | 0,02 |
+| Cốc xanh nhạt, cân bằng trắng tự chỉnh trên cốc | 1,85–1,90 | 0,26–0,30 | 0,06–0,15 |
+| Điều khiển trắng có chữ | 1,16 | 0,59 | 0,24 |
+| Gỗ | 13,6 | 0,28 | 0,15 |
+
+Đã sửa:
+- `Calibration.MAX_GAIN_RATIO` từ 3,0 xuống 1,6, gần điểm giữa giấy dưới đèn vàng (1,37) và cốc xanh (1,85).
+- Thêm `MAX_RELATIVE_SPREAD = 0,08`: từ chối vòng ngắm có chữ, vân, mép giấy hoặc nhiều vật.
+- **Lỗi "Calibrate again"**: trước đây app hiệu chuẩn lại trong khi vẫn giữ khóa phơi sáng và cân bằng trắng của lần trước, nên cùng tờ giấy đo ra ratio 1,45 thay vì 1,1. Giờ `ColorCamera.calibrate()` mở khóa, chờ khoảng 30 khung (1 giây) cho camera tự chỉnh, rồi mới khóa và đo. Hiệu chuẩn cũ bị bỏ ngay khi bấm.
+- Câu hướng dẫn hiệu chuẩn nói rõ phải dùng giấy trắng thật, vì tường xám hoặc màu kem cũng trông trắng với camera. Câu báo lỗi nhắc không để chữ, mép giấy hay bóng trong vòng ngắm.
+- Unit test mới dựng từ số đo thật: tổng cộng 49 test, tất cả qua.
+
+Giới hạn còn lại:
+- **Tường xám, tường màu kem vẫn được nhận làm trắng.** Camera tự cân bằng trắng và tự chỉnh sáng nên chúng giống hệt giấy; không ngưỡng nào tách được. Chỉ có thể dặn người dùng.
+- Lý do từ chối được tách riêng (`CalibrationProblem`): quá sáng, quá tối, không đều, có màu. Mỗi lý do có câu hướng dẫn riêng. Lý do: giấy sát đèn vàng bị cháy sáng, trước đây app báo "không giống giấy trắng" nên người dùng không biết phải dời đèn ra.
+- Đã đo dưới đèn vàng của chủ dự án: giấy ngả vàng rõ ra 1,37 và được chấp nhận. Một bóng vàng hơn (khoảng 2700K, đặt rất gần) có thể vượt 1,6; nếu người dùng báo không hiệu chuẩn được dưới đèn ngủ thì xem lại con số này. Hai test cũ dùng mẫu "giấy ấm" ratio 1,56–1,6 đã được đổi sang 1,33.
+- Câu báo "quá sáng" và "quá tối" mới chỉ kiểm bằng unit test, chưa hiện lên trên máy thật.

@@ -41,6 +41,7 @@ import com.hueno.coloridentifier.ui.history.HistoryScreen
 import com.hueno.coloridentifier.ui.onboarding.OnboardingScreen
 import com.hueno.coloridentifier.ui.photo.PhotoScreen
 import com.hueno.coloridentifier.ui.pro.ProScreen
+import com.hueno.monetization.BillingEvent
 import com.hueno.coloridentifier.ui.result.ResultScreen
 import com.hueno.coloridentifier.ui.settings.SettingsScreen
 
@@ -64,6 +65,18 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     )
 
     LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
+
+    // Messages for the Pro screen. Kept here so a purchase that completes after the screen was
+    // closed is still announced, as a toast.
+    var proMessage by remember { mutableStateOf<String?>(null) }
+    val appContext = LocalContext.current.applicationContext
+    LaunchedEffect(Unit) {
+        viewModel.billingEvents.collect { event ->
+            val text = appContext.getString(event.messageRes())
+            if (viewModel.proScreen != null) proMessage = text
+            else Toast.makeText(appContext, text, Toast.LENGTH_LONG).show()
+        }
+    }
 
     val collections by viewModel.collections.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -162,25 +175,32 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
 
     viewModel.proScreen?.let { reason ->
         BackHandler { viewModel.closePro() }
-        var message by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(Unit) { proMessage = null }
         val unavailable = stringResource(R.string.pro_buy_unavailable)
         val granted = stringResource(R.string.pro_watch_granted)
         val noVideo = stringResource(R.string.pro_watch_failed)
+        val restoring = stringResource(R.string.pro_restore_checking)
         HuenoTheme(dark = false) {
             ProScreen(
                 reason = reason,
                 state = money,
                 rewardedBusy = viewModel.rewardedBusy,
-                message = message,
+                message = proMessage,
                 onClose = viewModel::closePro,
-                onBuy = { activity?.let { if (!viewModel.buyPro(it)) message = unavailable } },
+                onBuy = {
+                    proMessage = null
+                    activity?.let { if (!viewModel.buyPro(it)) proMessage = unavailable }
+                },
                 onWatch = {
                     activity?.let { host ->
-                        message = null
-                        viewModel.watchRewarded(host) { ok -> message = if (ok) granted else noVideo }
+                        proMessage = null
+                        viewModel.watchRewarded(host) { ok -> proMessage = if (ok) granted else noVideo }
                     }
                 },
-                onRestore = viewModel::restorePurchases,
+                onRestore = {
+                    proMessage = restoring
+                    viewModel.restorePurchases()
+                },
                 onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
             )
         }
@@ -188,6 +208,15 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
 }
 
 private const val EXPORT_FILE_NAME = "hueno-colors.csv"
+
+private fun BillingEvent.messageRes(): Int = when (this) {
+    BillingEvent.PURCHASED -> R.string.pro_event_purchased
+    BillingEvent.PENDING -> R.string.pro_event_pending
+    BillingEvent.PURCHASE_FAILED -> R.string.pro_event_failed
+    BillingEvent.RESTORED -> R.string.pro_event_restored
+    BillingEvent.NOTHING_TO_RESTORE -> R.string.pro_event_nothing
+    BillingEvent.RESTORE_FAILED -> R.string.pro_event_restore_failed
+}
 
 /** Keeps status and navigation bar icons readable: light icons on dark screens and the reverse. */
 @Composable

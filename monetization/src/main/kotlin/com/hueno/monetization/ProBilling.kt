@@ -14,6 +14,19 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 
+/** Outcomes of a purchase or restore the user started, each one worth telling them about. */
+enum class BillingEvent {
+    PURCHASED,
+    /** Play accepted the payment but has not completed it, for example a cash payment. */
+    PENDING,
+    /** The purchase sheet reported an error other than the user closing it. */
+    PURCHASE_FAILED,
+    RESTORED,
+    NOTHING_TO_RESTORE,
+    /** Google Play could not be reached to check purchases. */
+    RESTORE_FAILED,
+}
+
 /**
  * The one-time Pro purchase through Google Play Billing.
  *
@@ -25,14 +38,29 @@ internal class ProBilling(
     private val productId: String,
     private val onPurchased: (Boolean) -> Unit,
     private val onPrice: (String?) -> Unit,
+    private val onEvent: (BillingEvent) -> Unit,
 ) {
     @Volatile
     private var details: ProductDetails? = null
 
     private val client: BillingClient = BillingClient.newBuilder(context.applicationContext)
         .setListener { result, purchases ->
-            if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-                handle(purchases, definitive = false)
+            when (result.responseCode) {
+                BillingClient.BillingResponseCode.OK -> if (purchases != null) {
+                    when (handle(purchases, definitive = false)) {
+                        Ownership.OWNED -> onEvent(BillingEvent.PURCHASED)
+                        Ownership.PENDING -> onEvent(BillingEvent.PENDING)
+                        Ownership.NONE -> Unit
+                    }
+                }
+                // Closing the sheet is a choice, not an error.
+                BillingClient.BillingResponseCode.USER_CANCELED -> Unit
+                // Bought before, on this account: the same as a restore.
+                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> refreshPurchases(userAsked = true)
+                else -> {
+                    Log.w(TAG, "Purchase failed: ${result.responseCode} ${result.debugMessage}")
+                    onEvent(BillingEvent.PURCHASE_FAILED)
+                }
             }
         }
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
@@ -78,20 +106,42 @@ internal class ProBilling(
         }
     }
 
-    /** Asks Play what this account owns. Also serves as "Restore purchase". */
-    fun refreshPurchases() {
-        if (!client.isReady) return
+    /**
+     * Asks Play what this account owns. Also serves as "Restore purchase": with [userAsked] every
+     * outcome, including a failure to reach Play, is reported through onEvent.
+     */
+    fun refreshPurchases(userAsked: Boolean = false) {
+        if (!client.isReady) {
+            if (userAsked) onEvent(BillingEvent.RESTORE_FAILED)
+            return
+        }
         val params = QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()
         client.queryPurchasesAsync(params) { result, purchases ->
-            if (result.responseCode == BillingClient.BillingResponseCode.OK) handle(purchases, definitive = true)
+            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                val ownership = handle(purchases, definitive = true)
+                if (userAsked) {
+                    onEvent(
+                        when (ownership) {
+                            Ownership.OWNED -> BillingEvent.RESTORED
+                            Ownership.PENDING -> BillingEvent.PENDING
+                            Ownership.NONE -> BillingEvent.NOTHING_TO_RESTORE
+                        },
+                    )
+                }
+            } else if (userAsked) {
+                Log.w(TAG, "Restore failed: ${result.responseCode} ${result.debugMessage}")
+                onEvent(BillingEvent.RESTORE_FAILED)
+            }
         }
     }
+
+    private enum class Ownership { OWNED, PENDING, NONE }
 
     /**
      * [definitive] is true for a full list of owned purchases, where the absence of Pro means it
      * is not owned. A purchase update only lists what just changed, so it can grant but not revoke.
      */
-    private fun handle(purchases: List<Purchase>, definitive: Boolean) {
+    private fun handle(purchases: List<Purchase>, definitive: Boolean): Ownership {
         val owned = purchases.filter {
             productId in it.products && it.purchaseState == Purchase.PurchaseState.PURCHASED
         }
@@ -105,6 +155,14 @@ internal class ProBilling(
             }
         }
         if (owned.isNotEmpty()) onPurchased(true) else if (definitive) onPurchased(false)
+        val pending = purchases.any {
+            productId in it.products && it.purchaseState == Purchase.PurchaseState.PENDING
+        }
+        return when {
+            owned.isNotEmpty() -> Ownership.OWNED
+            pending -> Ownership.PENDING
+            else -> Ownership.NONE
+        }
     }
 
     /** Opens the Play purchase sheet. Returns false when the product is not available yet. */

@@ -26,6 +26,8 @@
     <string name="permission_title">Camera access</string>
     <string name="permission_body">Hueno uses the camera to read colors. Frames are analyzed on this phone and never leave it.</string>
     <string name="permission_allow">Allow camera</string>
+    <string name="permission_blocked_body">Camera access is turned off for Hueno. Open settings, tap Permissions, then Camera, and choose Allow.</string>
+    <string name="permission_open_settings">Open settings</string>
 
     <!-- Camera screen -->
     <string name="camera_starting">Starting camera…</string>
@@ -35,12 +37,17 @@
     <string name="camera_resume">Resume</string>
     <string name="camera_capture">Capture color</string>
     <string name="camera_speak">Read color name aloud</string>
+    <string name="speak_unavailable">Read aloud is not available. Check text-to-speech in your phone\'s settings and make sure an English voice is installed.</string>
     <string name="camera_frozen">Frozen</string>
     <string name="camera_frozen_hint">Tap or drag on the picture to read another spot.</string>
     <string name="camera_issue_start">The camera could not be started.</string>
     <string name="camera_issue_lock">This camera did not accept the lock.</string>
-    <string name="camera_issue_calibration">That did not look like white paper. Fill the ring with a white surface and try again.</string>
+    <string name="camera_issue_calibration">That did not look like plain white paper. Fill the ring with blank paper, with no print, edges or shadows, and try again.</string>
+    <string name="camera_issue_calibration_bright">The paper is too bright for the camera to see its color. Move it away from the lamp or tilt it, then try again.</string>
+    <string name="camera_issue_calibration_dark">There is too little light on the paper. Add light or turn on the torch first, then try again.</string>
     <string name="camera_issue_profile">That saved calibration could not be used on this camera.</string>
+    <string name="camera_issue_cleared_paused">Calibration was cleared while Hueno was in the background. Calibrate again if you need it.</string>
+    <string name="camera_issue_cleared_torch">The light changed, so calibration was cleared. Calibrate again with the light as it is now.</string>
     <string name="sample_small">Small sample area</string>
     <string name="sample_medium">Medium sample area</string>
     <string name="sample_large">Large sample area</string>
@@ -72,7 +79,7 @@
 
     <!-- Calibration -->
     <string name="calibrate_title">Point at something white</string>
-    <string name="calibrate_body">Plain printer paper works. Fill the ring, then tap the button. Hueno corrects for the light you are in.</string>
+    <string name="calibrate_body">Use blank white printer paper and fill the ring, then tap the button. Hueno corrects for the light you are in. A light gray or cream wall looks white to the camera too, and would make every color wrong.</string>
     <string name="calibrate_now">Calibrate now</string>
     <string name="calibrate_clear">Clear calibration</string>
     <string name="calibrate_cancel">Cancel</string>
@@ -158,6 +165,13 @@
     <string name="pro_videos_note">Videos play only when you tap.</string>
     <string name="pro_privacy">Privacy choices</string>
     <string name="pro_restore">Restore purchase</string>
+    <string name="pro_restore_checking">Checking your purchases with Google Play…</string>
+    <string name="pro_event_purchased">Pro is yours. Thank you!</string>
+    <string name="pro_event_pending">Your payment is being processed. Pro turns on as soon as Google Play confirms it.</string>
+    <string name="pro_event_failed">The purchase did not go through. You have not been charged.</string>
+    <string name="pro_event_restored">Pro restored. Thank you!</string>
+    <string name="pro_event_nothing">No Pro purchase was found for this Google account.</string>
+    <string name="pro_event_restore_failed">Could not reach Google Play. Check your connection and try again.</string>
     <string name="pro_open">Pro</string>
     <string name="pro_open_active">Pro on</string>
 

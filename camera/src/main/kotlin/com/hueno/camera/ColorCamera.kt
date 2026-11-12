@@ -30,6 +30,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.hueno.core.color.Calibration
+import com.hueno.core.color.CalibrationProblem
 import com.hueno.core.color.ColorMath
 import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.ColorReading
@@ -45,10 +46,18 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class CameraIssue {
     START_FAILED,
     LOCK_REJECTED,
-    /** The surface in the ring was too dark, too bright or not white enough to calibrate on. */
+    /** The surface in the ring was colored or uneven, so not usable to calibrate on. */
     CALIBRATION_FAILED,
+    /** The surface in the ring was so bright that the camera lost its color. */
+    CALIBRATION_TOO_BRIGHT,
+    /** Too little light on the surface in the ring to calibrate on. */
+    CALIBRATION_TOO_DARK,
     /** A saved calibration could not be applied on this camera. */
     PROFILE_FAILED,
+    /** The calibration was dropped because the app left the screen and the camera was closed. */
+    CALIBRATION_CLEARED_PAUSED,
+    /** The calibration was dropped because the torch changed the light. */
+    CALIBRATION_CLEARED_TORCH,
 }
 
 /** Live state of the color camera. */
@@ -104,6 +113,8 @@ class ColorCamera(private val context: Context) {
     // Requests from the UI thread, carried out on the analysis thread.
     /** Frames left before calibrating; negative when no calibration is pending. */
     @Volatile private var calibrateCountdown = -1
+    /** Frames left before locking for a recalibration; negative when none is pending. */
+    @Volatile private var relockCountdown = -1
     @Volatile private var clearCalibrationRequested = false
     @Volatile private var resetRequested = false
     @Volatile private var calibrationToUse: Calibration? = null
@@ -209,6 +220,17 @@ class ColorCamera(private val context: Context) {
 
             val reading = processor.process(sample)
 
+            // Recalibrating: automatic exposure and white balance have had time to settle on
+            // the new surface, so lock them now and measure once the lock has taken effect.
+            val relock = relockCountdown
+            if (relock > 0) {
+                relockCountdown = relock - 1
+            } else if (relock == 0) {
+                relockCountdown = -1
+                ContextCompat.getMainExecutor(appContext).execute { setLocked(true) }
+                calibrateCountdown = SETTLE_FRAMES
+            }
+
             // Calibrate only after the lock has had time to take effect and the smoothing
             // window holds nothing but post-lock frames.
             val countdown = calibrateCountdown
@@ -216,10 +238,25 @@ class ColorCamera(private val context: Context) {
                 calibrateCountdown = countdown - 1
             } else if (countdown == 0) {
                 calibrateCountdown = -1
+                // Raw numbers for tuning the white-reference check on real devices.
+                val m = processor.lastMeasured ?: reading.linear
+                Log.i(
+                    TAG,
+                    "calibrate ref r=%.3f g=%.3f b=%.3f ratio=%.3f ringLum=%.3f sceneLum=%.3f spread=%.3f clipped=%.3f".format(
+                        java.util.Locale.US, m.r, m.g, m.b,
+                        maxOf(m.r, m.g, m.b) / minOf(m.r, m.g, m.b).coerceAtLeast(1e-6),
+                        m.luminance, sample.sceneLuminance, sample.areaSpread, sample.clippedFraction,
+                    ),
+                )
                 if (processor.calibrateFromCurrent()) {
                     activeCalibration = processor.calibration
                 } else {
-                    _state.value = _state.value.copy(issue = CameraIssue.CALIBRATION_FAILED)
+                    val issue = when (processor.lastCalibrationProblem) {
+                        CalibrationProblem.TOO_BRIGHT -> CameraIssue.CALIBRATION_TOO_BRIGHT
+                        CalibrationProblem.TOO_DARK -> CameraIssue.CALIBRATION_TOO_DARK
+                        else -> CameraIssue.CALIBRATION_FAILED
+                    }
+                    _state.value = _state.value.copy(issue = issue)
                 }
             }
             val now = SystemClock.elapsedRealtime()
@@ -266,7 +303,11 @@ class ColorCamera(private val context: Context) {
      * and watch the readings.
      */
     @OptIn(ExperimentalCamera2Interop::class)
-    fun setLocked(locked: Boolean) {
+    fun setLocked(locked: Boolean) = setLocked(locked, issueAfter = null)
+
+    /** [issueAfter] is published once the request has gone through, replacing any older issue. */
+    @OptIn(ExperimentalCamera2Interop::class)
+    private fun setLocked(locked: Boolean, issueAfter: CameraIssue?) {
         val control = camera?.cameraControl ?: return
         val camera2 = Camera2CameraControl.from(control)
         val result = if (locked) {
@@ -283,10 +324,16 @@ class ColorCamera(private val context: Context) {
         result.addListener({
             try {
                 result.get()
-                _state.value = _state.value.copy(locked = locked, issue = null)
+                _state.value = _state.value.copy(locked = locked, issue = issueAfter)
             } catch (e: Exception) {
                 Log.w(TAG, "Lock request failed", e)
-                _state.value = _state.value.copy(issue = CameraIssue.LOCK_REJECTED)
+                _state.value = if (!locked && issueAfter != null) {
+                    // Unlocking a camera that is closing can be refused; the options are cleared
+                    // either way, and the user still needs to hear why the calibration went.
+                    _state.value.copy(locked = false, issue = issueAfter)
+                } else {
+                    _state.value.copy(issue = CameraIssue.LOCK_REJECTED)
+                }
             }
         }, ContextCompat.getMainExecutor(appContext))
     }
@@ -296,15 +343,44 @@ class ColorCamera(private val context: Context) {
      * Point the ring at white paper first.
      */
     fun calibrate() {
-        setLocked(true)
-        calibrateCountdown = SETTLE_FRAMES
+        if (_state.value.locked) {
+            // Calibrating again. The camera is still held at the old light's settings; measuring
+            // under them would judge the new surface with the old white balance (paper read
+            // 1.45 instead of 1.13 that way). Release, let the camera adjust, then lock.
+            calibrateCountdown = -1
+            calibrationToUse = null
+            activeCalibration = null
+            clearCalibrationRequested = true
+            setLocked(false)
+            relockCountdown = RELEASE_FRAMES
+        } else {
+            setLocked(true)
+            calibrateCountdown = SETTLE_FRAMES
+        }
     }
 
-    /** Drops the calibration and returns the camera to automatic exposure and white balance. */
-    fun clearCalibration() {
+    /** True while a calibration is in effect or about to be measured. */
+    val isCalibrated: Boolean
+        get() = activeCalibration != null || calibrateCountdown >= 0 || relockCountdown >= 0 ||
+            calibrationToUse != null
+
+    /**
+     * Drops the calibration and returns the camera to automatic exposure and white balance.
+     * [reason] is shown to the user when the app, not the user, dropped it.
+     */
+    fun clearCalibration(reason: CameraIssue? = null) {
         calibrateCountdown = -1
+        relockCountdown = -1
+        calibrationToUse = null
+        // Mirrored at once, so a frozen frame read right after this is not corrected any more.
+        activeCalibration = null
         clearCalibrationRequested = true
-        setLocked(false)
+        resetRequested = true
+        if (camera == null) {
+            _state.value = _state.value.copy(locked = false, issue = reason ?: _state.value.issue)
+        } else {
+            setLocked(false, reason)
+        }
     }
 
     /**
@@ -361,6 +437,7 @@ class ColorCamera(private val context: Context) {
             )
             .build()
         calibrateCountdown = -1
+        relockCountdown = -1
         val result = Camera2CameraControl.from(control).setCaptureRequestOptions(options)
         result.addListener({
             try {
@@ -392,5 +469,8 @@ class ColorCamera(private val context: Context) {
 
         /** Frames to wait between asking for the lock and measuring the white reference. */
         const val SETTLE_FRAMES = 20
+
+        /** Frames, about one second, for exposure and white balance to adjust before relocking. */
+        const val RELEASE_FRAMES = 30
     }
 }

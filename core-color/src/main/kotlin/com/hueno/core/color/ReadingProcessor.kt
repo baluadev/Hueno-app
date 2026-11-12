@@ -32,13 +32,22 @@ class ReadingProcessor(window: Int = 8) {
 
     private val smoother = TemporalSmoother(window)
     private var lastSmoothed: LinearRgb? = null
+    private var lastSpread = 0.0
 
     var calibration: Calibration? = null
         private set
 
+    /** Why the last call to [calibrateFromCurrent] failed; null after a success. */
+    var lastCalibrationProblem: CalibrationProblem? = null
+        private set
+
+    /** The latest smoothed color before calibration; null until a frame has been processed. */
+    val lastMeasured: LinearRgb? get() = lastSmoothed
+
     fun process(sample: FrameSample): ColorReading {
         val smoothed = smoother.add(sample.mean)
         lastSmoothed = smoothed
+        lastSpread = sample.areaSpread
         val active = calibration
         val corrected = active?.apply(smoothed) ?: smoothed
         val rgb = ColorMath.toSrgb(corrected)
@@ -61,7 +70,8 @@ class ReadingProcessor(window: Int = 8) {
      */
     fun calibrateFromCurrent(): Boolean {
         val white = lastSmoothed ?: return false
-        val result = Calibration.fromWhiteReference(white) ?: return false
+        lastCalibrationProblem = Calibration.problemWith(white, lastSpread)
+        val result = Calibration.fromWhiteReference(white, lastSpread) ?: return false
         calibration = result
         return true
     }

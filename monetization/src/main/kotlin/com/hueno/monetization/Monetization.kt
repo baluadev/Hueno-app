@@ -3,7 +3,10 @@ package com.hueno.monetization
 import android.app.Activity
 import android.content.Context
 import java.time.LocalDate
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -52,6 +55,11 @@ class Monetization(context: Context, val config: MonetizationConfig) {
     private val _state = MutableStateFlow(MonetizationState())
     val state: StateFlow<MonetizationState> = _state.asStateFlow()
 
+    private val _billingEvents = MutableSharedFlow<BillingEvent>(extraBufferCapacity = 8)
+
+    /** One-off outcomes of a purchase or restore the user started. Not replayed to late collectors. */
+    val billingEvents: SharedFlow<BillingEvent> = _billingEvents.asSharedFlow()
+
     private val billing = ProBilling(
         context = context,
         productId = config.proProductId,
@@ -60,6 +68,7 @@ class Monetization(context: Context, val config: MonetizationConfig) {
             refresh()
         },
         onPrice = { price -> setPrice(price) },
+        onEvent = { event -> _billingEvents.tryEmit(event) },
     )
 
     private val ads = AdsController(context, config.rewardedUnitId) { refresh() }
@@ -129,7 +138,8 @@ class Monetization(context: Context, val config: MonetizationConfig) {
     /** Opens the Google Play purchase sheet. Returns false when the product is not available. */
     fun buyPro(activity: Activity): Boolean = billing.buy(activity)
 
-    fun restorePurchases() = billing.refreshPurchases()
+    /** Asks Play again what this account owns; the outcome arrives on [billingEvents]. */
+    fun restorePurchases() = billing.refreshPurchases(userAsked = true)
 
     /**
      * Plays a rewarded video and grants the pass if it is watched to the end. Sets up consent

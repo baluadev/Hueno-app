@@ -19,12 +19,14 @@ import com.hueno.core.color.Rgb
 import com.hueno.data.CaptureCsv
 import com.hueno.data.CaptureRepository
 import com.hueno.data.StoredCapture
+import com.hueno.monetization.BillingEvent
 import com.hueno.monetization.Monetization
 import com.hueno.monetization.MonetizationConfig
 import com.hueno.monetization.MonetizationState
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -92,6 +94,9 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     val money: StateFlow<MonetizationState> = monetization.state
 
     val bannerUnitId: String get() = monetization.config.bannerUnitId
+
+    /** Outcomes of buying or restoring Pro, to be shown to the user once each. */
+    val billingEvents: SharedFlow<BillingEvent> = monetization.billingEvents
 
     /** True until the first-run guide has been dismissed once. */
     var showOnboarding by mutableStateOf(!prefs.getBoolean(KEY_ONBOARDING_DONE, false))

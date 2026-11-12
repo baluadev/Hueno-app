@@ -9,7 +9,7 @@ class ReadingTest {
 
     @Test
     fun calibrationMakesTheWhiteReferenceNeutral() {
-        val warmWhite = LinearRgb(0.80, 0.70, 0.50)
+        val warmWhite = LinearRgb(0.80, 0.70, 0.60)
         val calibration = Calibration.fromWhiteReference(warmWhite)
         assertNotNull(calibration)
         val corrected = calibration!!.apply(warmWhite)
@@ -47,7 +47,7 @@ class ReadingTest {
         val processor = ReadingProcessor(window = 3)
         assertEquals("nothing measured yet", false, processor.calibrateFromCurrent())
 
-        val warmPaper = LinearRgb(0.70, 0.62, 0.45)
+        val warmPaper = LinearRgb(0.70, 0.62, 0.53)
         repeat(3) { processor.process(FrameSample(warmPaper, 0.0, 0.01, 0.2)) }
         assertEquals(true, processor.calibrateFromCurrent())
 
@@ -65,6 +65,41 @@ class ReadingTest {
         assertNull("too dark", Calibration.fromWhiteReference(LinearRgb(0.03, 0.03, 0.03)))
         assertNull("clipped", Calibration.fromWhiteReference(LinearRgb(1.0, 1.0, 1.0)))
         assertNull("not white", Calibration.fromWhiteReference(LinearRgb(0.8, 0.2, 0.1)))
+    }
+
+    /** Values logged on a Galaxy Z Flip4, 12/11/2026. */
+    @Test
+    fun calibrationCheckMatchesRealDeviceMeasurements() {
+        // White paper in room light, and close to a yellow lamp.
+        assertNotNull(Calibration.fromWhiteReference(LinearRgb(0.513, 0.532, 0.577), areaSpread = 0.009))
+        assertNotNull(Calibration.fromWhiteReference(LinearRgb(0.494, 0.490, 0.490), areaSpread = 0.005))
+        assertNotNull(Calibration.fromWhiteReference(LinearRgb(0.914, 0.784, 0.667), areaSpread = 0.008))
+        // White paper right under the lamp: the red channel clipped.
+        assertEquals(
+            CalibrationProblem.TOO_BRIGHT,
+            Calibration.problemWith(LinearRgb(1.000, 0.915, 0.765), areaSpread = 0.017),
+        )
+        // Pale blue mug, even and filling the ring, after white balance settled on it.
+        assertNull(Calibration.fromWhiteReference(LinearRgb(0.235, 0.306, 0.433), areaSpread = 0.017))
+        // The same mug measured under white balance held from the wall: colored and uneven.
+        assertNull(Calibration.fromWhiteReference(LinearRgb(0.114, 0.160, 0.244), areaSpread = 0.082))
+        // White remote control with print: neutral enough, but uneven.
+        assertEquals(
+            CalibrationProblem.UNEVEN,
+            Calibration.problemWith(LinearRgb(0.553, 0.592, 0.643), areaSpread = 0.141),
+        )
+        // Wood.
+        assertNull(Calibration.fromWhiteReference(LinearRgb(0.515, 0.236, 0.038), areaSpread = 0.041))
+    }
+
+    @Test
+    fun processorRejectsAnUnevenReference() {
+        val processor = ReadingProcessor(window = 2)
+        val paper = LinearRgb(0.55, 0.55, 0.55)
+        repeat(2) { processor.process(FrameSample(paper, 0.0, areaSpread = 0.15, sceneLuminance = 0.3)) }
+        assertEquals(false, processor.calibrateFromCurrent())
+        processor.process(FrameSample(paper, 0.0, areaSpread = 0.01, sceneLuminance = 0.3))
+        assertEquals(true, processor.calibrateFromCurrent())
     }
 
     @Test
