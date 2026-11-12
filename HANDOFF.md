@@ -181,3 +181,19 @@ Nếu bài 4 không đạt, lời hứa "hiệu chuẩn" phải thu hẹp trư�
 - Phản hồi cho mua, khôi phục, đọc to (vấn đề 16, 17).
 - Cấu hình ký và build thử bản release (vấn đề 6).
 - Thiết lập gỡ lỗi UMP để thử hộp thoại đồng ý (vấn đề 5).
+
+## 9. Cập nhật sau khi viết bàn giao
+
+### Splash và hiệu ứng mở đầu (12/11/2026)
+- Splash hệ thống: nền tối và logo, qua thư viện `core-splashscreen`. Theme khởi động là `Theme.Hueno.Starting`, icon là `drawable/ic_splash.xml`.
+- Hiệu ứng mở đầu: `ui/splash/SplashOverlay.kt`, dài khoảng 1,3 giây cộng 0,28 giây mờ dần. Vòng ngắm xoay và tách thành bốn cung, tâm đổi màu như đang dò màu, vòng khép lại, một vòng sáng tỏa ra, rồi tên app hiện lên.
+- App bên dưới chỉ được khởi động sau khi logo đã hoàn chỉnh (hằng số `REVEAL`), không khởi động cùng lúc với hiệu ứng. Lý do: khởi động camera và quảng cáo cùng lúc làm hiệu ứng bị giật.
+- Tỷ lệ logo trong `ic_splash.xml` (0.70) phải bằng `MARK_SCALE` trong `SplashOverlay.kt`, nếu không logo sẽ nhảy kích thước khi chuyển từ splash hệ thống sang hiệu ứng.
+- Tắt hiệu ứng trong cài đặt hệ thống thì app chỉ hiện logo tĩnh một lúc ngắn.
+
+### Vấn đề mới cần xem trên máy thật
+35. **App khởi động chặn luồng giao diện.** Trên máy ảo đang quá tải, hiệu ứng đứng lại khoảng 1,5 giây lúc app bắt đầu khởi động. Cần đo trên máy thật; nếu vẫn thấy khựng thì chuyển phần khởi tạo trong `HuenoViewModel` (Billing, Room, quảng cáo) ra khỏi luồng chính.
+36. **Splash làm kết quả màu đầu tiên đến muộn hơn khoảng 0,9 giây** so với trước. Cần kiểm lại tiêu chí "thấy màu trong 3 giây" ở bài thử 1; số `first … ms` trên màn hình chỉ tính từ lúc camera bắt đầu, không tính splash.
+37. Trên Android dưới 12, splash hệ thống vẽ icon ở kích thước khác, nên có thể có một nhịp nhảy kích thước khi vào hiệu ứng. Chưa thử.
+
+Thêm vào kế hoạch thử: quan sát lần mở app nguội, xem hiệu ứng có mượt không và mất bao lâu từ lúc chạm icon đến lúc thấy tên màu.

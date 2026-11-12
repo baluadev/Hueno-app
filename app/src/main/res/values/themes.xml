@@ -1,0 +1,12 @@
+<resources>
+    <!-- The app theme once the first frame is drawn. Screens are styled in Compose. -->
+    <style name="Theme.Hueno" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- What the system shows while the app starts: the mark on the dark tile color. The animated
+         intro in SplashOverlay picks up from exactly this picture. -->
+    <style name="Theme.Hueno.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.Hueno</item>
+    </style>
+</resources>

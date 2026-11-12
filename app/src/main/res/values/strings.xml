@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Hueno</string>
 
+    <string name="splash_tagline">Color names in plain words</string>
+
     <!-- Navigation -->
     <string name="tab_camera">Camera</string>
     <string name="tab_photo">Photo</string>

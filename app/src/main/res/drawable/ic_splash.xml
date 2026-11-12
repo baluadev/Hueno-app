@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Hueno mark for the system splash screen. The system clips the splash icon to a circle
+     two thirds the width of its box, so the mark is scaled to keep the tail inside it.
+     SplashOverlay draws the same geometry with the same scale. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <group
+        android:pivotX="256"
+        android:pivotY="256"
+        android:scaleX="0.70"
+        android:scaleY="0.70">
+        <path
+            android:fillColor="#F5B301"
+            android:pathData="M132,318 L104,424 L206,378 Z" />
+        <path
+            android:pathData="M256,104 A132,132 0 0 1 388,236"
+            android:strokeColor="#3D6BF2"
+            android:strokeWidth="52" />
+        <path
+            android:pathData="M388,236 A132,132 0 0 1 256,368"
+            android:strokeColor="#1DB8A6"
+            android:strokeWidth="52" />
+        <path
+            android:pathData="M256,368 A132,132 0 0 1 124,236"
+            android:strokeColor="#F5B301"
+            android:strokeWidth="52" />
+        <path
+            android:pathData="M124,236 A132,132 0 0 1 256,104"
+            android:strokeColor="#F2603D"
+            android:strokeWidth="52" />
+        <path
+            android:fillColor="#F6F4EF"
+            android:pathData="M212,236 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0" />
+    </group>
+</vector>
