@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,11 +33,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
+import com.hueno.coloridentifier.ui.AdBanner
 import com.hueno.coloridentifier.ui.Capture
 import com.hueno.coloridentifier.ui.HuenoColors
 
 @Composable
-fun HistoryScreen(captures: List<Capture>, onOpen: (Capture) -> Unit) {
+fun HistoryScreen(
+    captures: List<Capture>,
+    isPro: Boolean,
+    bannerUnitId: String?,
+    onOpen: (Capture) -> Unit,
+    onOpenPro: () -> Unit,
+) {
     Column(Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
@@ -53,13 +62,21 @@ fun HistoryScreen(captures: List<Capture>, onOpen: (Capture) -> Unit) {
                     stringResource(R.string.history_count, captures.size),
                     color = HuenoColors.OnPaperMuted,
                     fontSize = 13.sp,
+                    modifier = Modifier.padding(end = 12.dp),
+                )
+            }
+            OutlinedButton(onClick = onOpenPro, modifier = Modifier.height(48.dp)) {
+                Text(
+                    stringResource(if (isPro) R.string.pro_open_active else R.string.pro_open),
+                    color = HuenoColors.OnPaper,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }
 
         if (captures.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(28.dp),
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(28.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
             ) {
                 Text(
@@ -72,12 +89,14 @@ fun HistoryScreen(captures: List<Capture>, onOpen: (Capture) -> Unit) {
             }
         } else {
             LazyColumn(
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(captures, key = { it.id }) { capture -> CaptureRow(capture) { onOpen(capture) } }
             }
         }
+        bannerUnitId?.let { AdBanner(it, Modifier.padding(vertical = 6.dp)) }
     }
 }
 

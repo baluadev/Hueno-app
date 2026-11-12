@@ -96,6 +96,35 @@
     <string name="photo_error">That photo could not be opened.</string>
     <string name="photo_description">Selected photo</string>
 
+    <!-- Pro -->
+    <string name="pro_title">Hueno Pro</string>
+    <string name="pro_intro">Everything you need to identify colors is already included. Pro removes the limits and the ads.</string>
+    <string name="pro_reason_compare">You have used today\'s %1$d comparisons.</string>
+    <string name="pro_reason_history">Your history holds %1$d colors, which is the limit without Pro.</string>
+    <string name="pro_benefit_ads">No ads anywhere</string>
+    <string name="pro_benefit_history">Unlimited history</string>
+    <string name="pro_benefit_compare">Unlimited color comparisons</string>
+    <string name="pro_buy_title">Buy Pro, yours to keep</string>
+    <string name="pro_buy_subtitle">Pay once. No subscription.</string>
+    <string name="pro_buy_unavailable">Not available right now. Check your connection.</string>
+    <plurals name="pro_watch_title">
+        <item quantity="one">Use Pro for %1$d hour</item>
+        <item quantity="other">Use Pro for %1$d hours</item>
+    </plurals>
+    <string name="pro_watch_subtitle">Watch one short video. Stack up to %1$d hours.</string>
+    <string name="pro_watch_loading">Getting a video…</string>
+    <string name="pro_watch_at_cap">Your pass is at the %1$d hour maximum.</string>
+    <string name="pro_watch_failed">No video is available right now. Try again in a little while.</string>
+    <string name="pro_watch_granted">Pro is on. Enjoy.</string>
+    <string name="pro_status_purchased">You own Pro. Thank you.</string>
+    <string name="pro_status_pass">Pro pass running: %1$d h %2$d min left. Colors you save now stay yours when it ends.</string>
+    <string name="pro_status_free">No Pro pass is running.</string>
+    <string name="pro_videos_note">Videos play only when you tap.</string>
+    <string name="pro_privacy">Privacy choices</string>
+    <string name="pro_restore">Restore purchase</string>
+    <string name="pro_open">Pro</string>
+    <string name="pro_open_active">Pro on</string>
+
     <!-- History -->
     <string name="history_title">History</string>
     <string name="history_empty_title">No colors yet</string>

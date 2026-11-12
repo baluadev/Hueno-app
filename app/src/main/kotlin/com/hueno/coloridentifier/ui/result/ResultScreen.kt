@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
+import com.hueno.coloridentifier.ui.AdBanner
 import com.hueno.coloridentifier.ui.Capture
 import com.hueno.coloridentifier.ui.CaptureSource
 import com.hueno.coloridentifier.ui.HuenoColors
@@ -60,6 +61,7 @@ fun ResultScreen(
     onBack: () -> Unit,
     onCompare: () -> Unit,
     onDelete: () -> Unit,
+    bannerUnitId: String? = null,
 ) {
     val rgb = capture.rgb
     val (h, s, l) = ColorMath.toHsl(rgb)
@@ -176,6 +178,7 @@ fun ResultScreen(
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }
+            bannerUnitId?.let { AdBanner(it) }
         }
     }
 }

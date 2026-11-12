@@ -4,6 +4,15 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Ad and product identifiers. Without overrides these are Google's public test ids, which are
+// safe to click but earn nothing. Set the real ones in ~/.gradle/gradle.properties or with -P.
+fun setting(name: String, fallback: String): String = (project.findProperty(name) as String?) ?: fallback
+
+val adMobAppId = setting("HUENO_ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+val adBannerUnitId = setting("HUENO_AD_BANNER_UNIT_ID", "ca-app-pub-3940256099942544/9214589741")
+val adRewardedUnitId = setting("HUENO_AD_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917")
+val proProductId = setting("HUENO_PRO_PRODUCT_ID", "pro_lifetime")
+
 android {
     namespace = "com.hueno.coloridentifier"
     compileSdk = 36
@@ -14,6 +23,11 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+
+        manifestPlaceholders["adMobAppId"] = adMobAppId
+        buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$adBannerUnitId\"")
+        buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$adRewardedUnitId\"")
+        buildConfigField("String", "PRO_PRODUCT_ID", "\"$proProductId\"")
     }
 
     buildTypes {
@@ -45,6 +59,7 @@ dependencies {
     implementation(project(":core-color"))
     implementation(project(":camera"))
     implementation(project(":data"))
+    implementation(project(":monetization"))
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 

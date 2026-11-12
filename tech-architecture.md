@@ -109,3 +109,25 @@ Nếu câu đầu không đạt trên phần lớn máy, lời hứa "hiệu chu
 7. Trợ năng, thử trên 5 máy, chuẩn bị phát hành.
 
 Phần kiếm tiền để sau cùng vì nó không ảnh hưởng tới câu hỏi "sản phẩm có chạy tốt không", và tách riêng thì dễ gỡ lỗi hơn.
+
+## 7. Pro và quảng cáo: cấu hình
+
+Module `:monetization` gồm quy tắc Pro (`ProRules`), mua Pro qua Play Billing (`ProBilling`), đồng ý và quảng cáo (`AdsController`), và lớp gộp `Monetization` phát ra một trạng thái duy nhất.
+
+Mặc định app dùng **mã thử nghiệm công khai của Google**: bấm vào an toàn nhưng không sinh doanh thu. Trước khi phát hành, đặt mã thật trong `~/.gradle/gradle.properties` (không đưa vào git) hoặc truyền bằng `-P`:
+
+| Thuộc tính | Ý nghĩa | Lấy ở đâu |
+|---|---|---|
+| `HUENO_ADMOB_APP_ID` | Mã ứng dụng AdMob | AdMob, mục ứng dụng |
+| `HUENO_AD_BANNER_UNIT_ID` | Đơn vị quảng cáo banner | AdMob, mục đơn vị quảng cáo |
+| `HUENO_AD_REWARDED_UNIT_ID` | Đơn vị quảng cáo có thưởng | AdMob, mục đơn vị quảng cáo |
+| `HUENO_PRO_PRODUCT_ID` | Mã sản phẩm mua một lần, mặc định `pro_lifetime` | Play Console, mục sản phẩm trong ứng dụng |
+
+Các con số của bản miễn phí nằm trong `ProRules`: 6 giờ mỗi video, cộng dồn tối đa 24 giờ, 3 lần so màu mỗi ngày, 20 màu trong lịch sử.
+
+Hành vi đã cài đặt:
+- Phiên đầu tiên không khởi tạo SDK quảng cáo và không hỏi đồng ý.
+- Từ phiên thứ hai, người dùng miễn phí được hỏi đồng ý (ở vùng luật yêu cầu) rồi mới có quảng cáo. Người đang có Pro thì không.
+- Banner chỉ có ở màn hình màu đã chụp và lịch sử, trong ô có chiều cao cố định.
+- Video có thưởng chỉ phát khi người dùng bấm.
+- Trạng thái mua lấy từ Google Play; kết quả gần nhất được lưu lại để Pro vẫn hoạt động khi mất mạng.

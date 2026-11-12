@@ -14,11 +14,16 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
@@ -29,6 +34,7 @@ import com.hueno.coloridentifier.ui.camera.CameraScreen
 import com.hueno.coloridentifier.ui.history.HistoryScreen
 import com.hueno.coloridentifier.ui.onboarding.OnboardingScreen
 import com.hueno.coloridentifier.ui.photo.PhotoScreen
+import com.hueno.coloridentifier.ui.pro.ProScreen
 import com.hueno.coloridentifier.ui.result.ResultScreen
 
 @Composable
@@ -42,8 +48,13 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     val tab = viewModel.tab
     val dark = tab != Tab.HISTORY
     val speaker = rememberSpeaker()
-    // The detail screen is light and covers the whole window while it is open.
-    SystemBarIcons(darkScreen = dark && viewModel.openCapture == null)
+    val money by viewModel.money.collectAsStateWithLifecycle()
+    val activity = LocalContext.current as? Activity
+    val bannerUnitId = if (money.showBanners) viewModel.bannerUnitId else null
+    // The detail and Pro screens are light and cover the whole window while open.
+    SystemBarIcons(darkScreen = dark && viewModel.openCapture == null && viewModel.proScreen == null)
+
+    LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
 
     HuenoTheme(dark = dark) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -59,7 +70,13 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                         Tab.PHOTO -> PhotoScreen(onSave = viewModel::captureFromPhoto)
                         Tab.HISTORY -> {
                             val captures by viewModel.captures.collectAsStateWithLifecycle()
-                            HistoryScreen(captures = captures, onOpen = viewModel::open)
+                            HistoryScreen(
+                                captures = captures,
+                                isPro = money.isPro,
+                                bannerUnitId = bannerUnitId,
+                                onOpen = viewModel::open,
+                                onOpenPro = viewModel::openPro,
+                            )
                         }
                     }
                 }
@@ -79,6 +96,33 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                 onBack = viewModel::closeCapture,
                 onCompare = { viewModel.compareWithCamera(capture) },
                 onDelete = { viewModel.delete(capture) },
+                bannerUnitId = bannerUnitId,
+            )
+        }
+    }
+
+    viewModel.proScreen?.let { reason ->
+        BackHandler { viewModel.closePro() }
+        var message by remember { mutableStateOf<String?>(null) }
+        val unavailable = stringResource(R.string.pro_buy_unavailable)
+        val granted = stringResource(R.string.pro_watch_granted)
+        val noVideo = stringResource(R.string.pro_watch_failed)
+        HuenoTheme(dark = false) {
+            ProScreen(
+                reason = reason,
+                state = money,
+                rewardedBusy = viewModel.rewardedBusy,
+                message = message,
+                onClose = viewModel::closePro,
+                onBuy = { activity?.let { if (!viewModel.buyPro(it)) message = unavailable } },
+                onWatch = {
+                    activity?.let { host ->
+                        message = null
+                        viewModel.watchRewarded(host) { ok -> message = if (ok) granted else noVideo }
+                    }
+                },
+                onRestore = viewModel::restorePurchases,
+                onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
             )
         }
     }
