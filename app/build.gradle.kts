@@ -13,6 +13,9 @@ val adBannerUnitId = setting("HUENO_AD_BANNER_UNIT_ID", "ca-app-pub-394025609994
 val adRewardedUnitId = setting("HUENO_AD_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917")
 val proProductId = setting("HUENO_PRO_PRODUCT_ID", "pro_lifetime")
 
+// Address for the "Send feedback" row in Settings. Empty hides the row.
+val feedbackEmail = setting("HUENO_FEEDBACK_EMAIL", "")
+
 android {
     namespace = "com.hueno.coloridentifier"
     compileSdk = 36
@@ -28,6 +31,7 @@ android {
         buildConfigField("String", "AD_BANNER_UNIT_ID", "\"$adBannerUnitId\"")
         buildConfigField("String", "AD_REWARDED_UNIT_ID", "\"$adRewardedUnitId\"")
         buildConfigField("String", "PRO_PRODUCT_ID", "\"$proProductId\"")
+        buildConfigField("String", "FEEDBACK_EMAIL", "\"$feedbackEmail\"")
     }
 
     buildTypes {

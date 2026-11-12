@@ -11,6 +11,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,17 +21,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +52,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,13 +64,17 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hueno.camera.CalibrationProfile
+import com.hueno.camera.CalibrationProfileStore
 import com.hueno.camera.CameraColorState
+import com.hueno.camera.CameraIssue
 import com.hueno.camera.ColorCamera
 import com.hueno.camera.SampleSize
 import com.hueno.coloridentifier.BuildConfig
@@ -68,21 +82,34 @@ import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.HuenoColors
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.coloridentifier.ui.Speaker
+import com.hueno.coloridentifier.ui.Thumbnails
 import com.hueno.coloridentifier.ui.labelRes
 import com.hueno.coloridentifier.ui.tipRes
 import com.hueno.core.color.ColorDifference
 import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.ColorReading
+import com.hueno.core.color.ConfidenceLevel
 import com.hueno.core.color.Rgb
 import com.hueno.core.color.Verdict
-import com.hueno.core.color.ConfidenceLevel
+import kotlin.math.max
+import kotlin.math.min
 
+private const val MAX_PROFILE_NAME = 40
+
+/**
+ * @param onCapture receives the reading and, when available, a small picture of the object.
+ * @param canSaveProfile whether one more calibration may be saved, given how many exist.
+ * @param onProfileLimit called when a free user tries to save more calibrations than allowed.
+ */
 @Composable
 fun CameraScreen(
     speaker: Speaker,
     compareReference: Rgb?,
     onCompareReference: (Rgb?) -> Unit,
-    onCapture: (ColorReading) -> Unit,
+    onCapture: (ColorReading, Bitmap?) -> Unit,
+    canSaveProfile: (Int) -> Boolean,
+    onProfileLimit: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     var granted by remember {
@@ -93,7 +120,7 @@ fun CameraScreen(
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
 
     if (granted) {
-        LiveCamera(speaker, compareReference, onCompareReference, onCapture)
+        LiveCamera(speaker, compareReference, onCompareReference, onCapture, canSaveProfile, onProfileLimit, onOpenSettings)
     } else {
         Column(
             modifier = Modifier.fillMaxSize().padding(28.dp),
@@ -126,11 +153,15 @@ private fun LiveCamera(
     speaker: Speaker,
     compareReference: Rgb?,
     onCompareReference: (Rgb?) -> Unit,
-    onCapture: (ColorReading) -> Unit,
+    onCapture: (ColorReading, Bitmap?) -> Unit,
+    canSaveProfile: (Int) -> Boolean,
+    onProfileLimit: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val camera = remember { ColorCamera(context) }
+    val profileStore = remember { CalibrationProfileStore(context) }
     val previewView = remember {
         PreviewView(context).apply {
             // A TextureView-backed preview can be read back as a bitmap, which Freeze needs.
@@ -142,9 +173,24 @@ private fun LiveCamera(
 
     var size by remember { mutableStateOf(SampleSize.MEDIUM) }
     var torch by remember { mutableStateOf(false) }
-    var frozenFrame by remember { mutableStateOf<Bitmap?>(null) }
     var calibrating by remember { mutableStateOf(false) }
+    var profiles by remember { mutableStateOf(profileStore.all()) }
+    var namingProfile by remember { mutableStateOf(false) }
+
+    // Freeze: the picture on screen is held, and the ring can be moved around inside it.
+    var frozenFrame by remember { mutableStateOf<Bitmap?>(null) }
+    var ring by remember { mutableStateOf(Offset(0.5f, 0.5f)) }
+    var frozenReading by remember { mutableStateOf<ColorReading?>(null) }
+    var box by remember { mutableStateOf(IntSize.Zero) }
     val frozen = frozenFrame != null
+    val reading = if (frozen) frozenReading ?: state.reading else state.reading
+
+    fun moveRing(position: Offset) {
+        val frame = frozenFrame ?: return
+        if (box.width == 0 || box.height == 0) return
+        ring = Offset((position.x / box.width).coerceIn(0f, 1f), (position.y / box.height).coerceIn(0f, 1f))
+        frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, size.radiusFraction))
+    }
 
     DisposableEffect(lifecycleOwner) {
         camera.start(lifecycleOwner, previewView)
@@ -160,6 +206,7 @@ private fun LiveCamera(
                 camera.setTorch(torch)
             },
             onCalibrate = { calibrating = true },
+            onSettings = onOpenSettings,
         )
 
         Box(
@@ -170,30 +217,57 @@ private fun LiveCamera(
                 .clip(RoundedCornerShape(24.dp))
                 .background(HuenoColors.InkRaised),
         ) {
-            AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-            frozenFrame?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
+            // The picture and its touch handling are one layer; the chips above are siblings, so
+            // pressing them never moves the ring.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { box = it }
+                    .pointerInput(frozen) {
+                        if (!frozen) return@pointerInput
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            moveRing(down.position)
+                            do {
+                                val event = awaitPointerEvent()
+                                event.changes.firstOrNull { it.pressed }?.let { moveRing(it.position) }
+                                event.changes.forEach { it.consume() }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    },
+            ) {
+                AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+                frozenFrame?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.FillBounds,
+                    )
+                }
+                // Drawn against the shorter side of the preview. The preview is center-cropped, so
+                // the live ring matches the sampled area closely but not to the pixel.
+                Canvas(Modifier.fillMaxSize()) {
+                    val radius = (minOf(this.size.width, this.size.height) * size.radiusFraction).toFloat()
+                    val center = if (frozen) {
+                        Offset(this.size.width * ring.x, this.size.height * ring.y)
+                    } else {
+                        Offset(this.size.width / 2, this.size.height / 2)
+                    }
+                    drawCircle(HuenoColors.Ink, radius + 4f, center, style = Stroke(width = 5f))
+                    drawCircle(Color.White, radius, center, style = Stroke(width = 5f))
+                    drawCircle(Color.White, 3f, center)
+                }
             }
-            // Drawn against the shorter side of the preview. The preview is center-cropped, so
-            // the ring matches the sampled area closely but not to the pixel.
-            Canvas(Modifier.fillMaxSize()) {
-                val radius = (minOf(this.size.width, this.size.height) * size.radiusFraction).toFloat()
-                val center = Offset(this.size.width / 2, this.size.height / 2)
-                drawCircle(HuenoColors.Ink, radius + 4f, center, style = Stroke(width = 5f))
-                drawCircle(Color.White, radius, center, style = Stroke(width = 5f))
-                drawCircle(Color.White, 3f, center)
-            }
-            ConfidenceChip(state, frozen, Modifier.align(Alignment.TopStart).padding(12.dp))
+            ConfidenceChip(reading, frozen, Modifier.align(Alignment.TopStart).padding(12.dp))
             SizeSelector(
                 selected = size,
                 onSelect = {
                     size = it
                     camera.sampleSize = it
+                    frozenFrame?.let { frame ->
+                        frozenReading = camera.readingFromPixels(pixelsAround(frame, ring, it.radiusFraction))
+                    }
                 },
                 modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
             )
@@ -202,29 +276,35 @@ private fun LiveCamera(
         if (calibrating) {
             CalibrationPanel(
                 calibrated = state.reading?.calibrated == true,
-                error = state.error,
+                supportsProfiles = state.supportsProfiles,
+                profiles = profiles,
+                issue = state.issue,
                 onCalibrate = {
                     camera.sampleSize = SampleSize.LARGE
                     size = SampleSize.LARGE
                     camera.calibrate()
+                },
+                onSave = { if (canSaveProfile(profiles.size)) namingProfile = true else onProfileLimit() },
+                onUse = {
+                    camera.applyProfile(it)
                     calibrating = false
                 },
+                onDelete = { profiles = profileStore.delete(it.id) },
                 onClear = {
                     camera.clearCalibration()
                     calibrating = false
                 },
-                onCancel = { calibrating = false },
+                onDone = { calibrating = false },
             )
         } else {
-            val current = state.reading
-            if (compareReference != null && current != null) {
-                ComparePanel(reference = compareReference, current = current.rgb) { speaker.say(it) }
+            if (compareReference != null && reading != null) {
+                ComparePanel(reference = compareReference, current = reading.rgb) { speaker.say(it) }
             } else {
-                ReadingRow(current) { current?.let { speaker.say(it.name.plain) } }
+                ReadingRow(reading, frozen) { reading?.let { speaker.say(it.name.plain) } }
             }
-            state.error?.let {
+            state.issue?.let {
                 Text(
-                    it,
+                    stringResource(it.messageRes()),
                     color = HuenoColors.OnInk,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 20.dp),
@@ -242,28 +322,84 @@ private fun LiveCamera(
                 ) {
                     if (frozen) {
                         frozenFrame = null
+                        frozenReading = null
                         camera.frozen = false
                     } else {
                         camera.frozen = true
+                        ring = Offset(0.5f, 0.5f)
+                        frozenReading = null
                         frozenFrame = previewView.bitmap
                     }
                 }
-                CaptureButton(enabled = state.reading != null) { state.reading?.let(onCapture) }
+                CaptureButton(enabled = reading != null) {
+                    reading?.let { current ->
+                        // The picture shows what was in the ring: the frozen frame, or the live one.
+                        val frame = frozenFrame ?: previewView.bitmap
+                        val spot = if (frozen) ring else Offset(0.5f, 0.5f)
+                        onCapture(current, frame?.let { Thumbnails.around(it, spot.x, spot.y) })
+                    }
+                }
                 val comparing = compareReference != null
                 LabeledAction(
                     icon = if (comparing) HuenoIcons.Close else HuenoIcons.Compare,
                     label = stringResource(if (comparing) R.string.compare_end else R.string.compare_start),
                 ) {
                     // Starting a comparison takes the color in the ring as color A.
-                    onCompareReference(if (comparing) null else state.reading?.rgb)
+                    onCompareReference(if (comparing) null else reading?.rgb)
                 }
             }
         }
     }
+
+    if (namingProfile) {
+        ProfileNameDialog(
+            onDismiss = { namingProfile = false },
+            onSave = { name ->
+                namingProfile = false
+                camera.snapshotProfile(name)?.let { profiles = profileStore.save(it) }
+            },
+        )
+    }
+}
+
+/** Pixels inside a circle around a spot of the frozen picture, at most a few thousand. */
+private fun pixelsAround(frame: Bitmap, spot: Offset, radiusFraction: Double): IntArray {
+    val cx = (spot.x * (frame.width - 1)).toInt()
+    val cy = (spot.y * (frame.height - 1)).toInt()
+    val radius = max(1, (min(frame.width, frame.height) * radiusFraction).toInt())
+    val step = max(1, radius / 24)
+    val out = ArrayList<Int>()
+    var dy = -radius
+    while (dy <= radius) {
+        var dx = -radius
+        while (dx <= radius) {
+            val x = cx + dx
+            val y = cy + dy
+            if (dx * dx + dy * dy <= radius * radius && x in 0 until frame.width && y in 0 until frame.height) {
+                out.add(frame.getPixel(x, y))
+            }
+            dx += step
+        }
+        dy += step
+    }
+    return out.toIntArray()
+}
+
+private fun CameraIssue.messageRes(): Int = when (this) {
+    CameraIssue.START_FAILED -> R.string.camera_issue_start
+    CameraIssue.LOCK_REJECTED -> R.string.camera_issue_lock
+    CameraIssue.CALIBRATION_FAILED -> R.string.camera_issue_calibration
+    CameraIssue.PROFILE_FAILED -> R.string.camera_issue_profile
 }
 
 @Composable
-private fun TopBar(torch: Boolean, calibrated: Boolean, onTorch: () -> Unit, onCalibrate: () -> Unit) {
+private fun TopBar(
+    torch: Boolean,
+    calibrated: Boolean,
+    onTorch: () -> Unit,
+    onCalibrate: () -> Unit,
+    onSettings: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -278,6 +414,8 @@ private fun TopBar(torch: Boolean, calibrated: Boolean, onTorch: () -> Unit, onC
         RoundIconButton(HuenoIcons.Calibrate, stringResource(R.string.camera_calibrate), calibrated, onCalibrate)
         Spacer(Modifier.width(6.dp))
         RoundIconButton(HuenoIcons.Torch, stringResource(R.string.camera_torch), torch, onTorch)
+        Spacer(Modifier.width(6.dp))
+        RoundIconButton(HuenoIcons.Settings, stringResource(R.string.settings_title), false, onSettings)
     }
 }
 
@@ -301,8 +439,8 @@ private fun RoundIconButton(icon: ImageVector, description: String, active: Bool
 }
 
 @Composable
-private fun ConfidenceChip(state: CameraColorState, frozen: Boolean, modifier: Modifier = Modifier) {
-    val reading = state.reading ?: return
+private fun ConfidenceChip(reading: ColorReading?, frozen: Boolean, modifier: Modifier = Modifier) {
+    if (reading == null) return
     val level = reading.confidence.level
     val text = buildString {
         append(stringResource(level.labelRes()))
@@ -366,7 +504,7 @@ private fun SizeSelector(selected: SampleSize, onSelect: (SampleSize) -> Unit, m
 }
 
 @Composable
-private fun ReadingRow(reading: ColorReading?, onSpeak: () -> Unit) {
+private fun ReadingRow(reading: ColorReading?, frozen: Boolean, onSpeak: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -393,9 +531,12 @@ private fun ReadingRow(reading: ColorReading?, onSpeak: () -> Unit) {
                     color = HuenoColors.OnInkMuted,
                     fontSize = 15.sp,
                 )
-                reading.confidence.issue?.let {
-                    Text(stringResource(it.tipRes()), color = HuenoColors.OnInk, fontSize = 13.sp)
+                val tip = if (frozen) {
+                    stringResource(R.string.camera_frozen_hint)
+                } else {
+                    reading.confidence.issue?.let { stringResource(it.tipRes()) }
                 }
+                tip?.let { Text(it, color = HuenoColors.OnInk, fontSize = 13.sp) }
             }
         }
         if (reading != null) {
@@ -443,35 +584,96 @@ private fun CaptureButton(enabled: Boolean, onClick: () -> Unit) {
 @Composable
 private fun CalibrationPanel(
     calibrated: Boolean,
-    error: String?,
+    supportsProfiles: Boolean,
+    profiles: List<CalibrationProfile>,
+    issue: CameraIssue?,
     onCalibrate: () -> Unit,
+    onSave: () -> Unit,
+    onUse: (CalibrationProfile) -> Unit,
+    onDelete: (CalibrationProfile) -> Unit,
     onClear: () -> Unit,
-    onCancel: () -> Unit,
+    onDone: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 380.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            stringResource(R.string.calibrate_title),
+            stringResource(if (calibrated) R.string.calibrate_done_title else R.string.calibrate_title),
             color = HuenoColors.OnInk,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
         )
-        Text(stringResource(R.string.calibrate_body), color = HuenoColors.OnInkMuted, fontSize = 15.sp)
-        Text(stringResource(R.string.calibrate_note), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
-        error?.let { Text(it, color = HuenoColors.OnInk, fontSize = 14.sp) }
+        Text(
+            stringResource(if (calibrated) R.string.calibrate_done_body else R.string.calibrate_body),
+            color = HuenoColors.OnInkMuted,
+            fontSize = 15.sp,
+        )
+        issue?.let { Text(stringResource(it.messageRes()), color = HuenoColors.OnInk, fontSize = 14.sp) }
+
         Button(
             onClick = onCalibrate,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = HuenoColors.Action,
-                contentColor = HuenoColors.OnAction,
-            ),
-        ) { Text(stringResource(R.string.calibrate_now), fontSize = 17.sp, fontWeight = FontWeight.SemiBold) }
+            colors = ButtonDefaults.buttonColors(containerColor = HuenoColors.Action, contentColor = HuenoColors.OnAction),
+        ) {
+            Text(
+                stringResource(if (calibrated) R.string.calibrate_again else R.string.calibrate_now),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+
+        if (supportsProfiles) {
+            if (calibrated) {
+                OutlinedButton(onClick = onSave, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                    Text(stringResource(R.string.profile_save), color = HuenoColors.OnInk)
+                }
+            }
+            if (profiles.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.profile_saved_heading),
+                    color = HuenoColors.OnInkMuted,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                profiles.forEach { profile ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(HuenoColors.InkRaised)
+                            .padding(start = 14.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(profile.name, color = HuenoColors.OnInk, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { onUse(profile) }) {
+                            Text(stringResource(R.string.profile_use), color = HuenoColors.OnInk, fontWeight = FontWeight.SemiBold)
+                        }
+                        val delete = stringResource(R.string.profile_delete, profile.name)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .clickable(role = Role.Button) { onDelete(profile) }
+                                .semantics { contentDescription = delete },
+                            contentAlignment = Alignment.Center,
+                        ) { Icon(HuenoIcons.Trash, contentDescription = null, tint = HuenoColors.OnInkMuted) }
+                    }
+                }
+                Text(stringResource(R.string.profile_note), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
+            }
+        } else {
+            Text(stringResource(R.string.profile_unsupported), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f).height(48.dp)) {
-                Text(stringResource(R.string.calibrate_cancel), color = HuenoColors.OnInk)
+            OutlinedButton(onClick = onDone, modifier = Modifier.weight(1f).height(48.dp)) {
+                Text(stringResource(R.string.calibrate_close), color = HuenoColors.OnInk)
             }
             if (calibrated) {
                 OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f).height(48.dp)) {
@@ -480,6 +682,32 @@ private fun CalibrationPanel(
             }
         }
     }
+}
+
+@Composable
+private fun ProfileNameDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var text by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.profile_name_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.profile_name_body))
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it.take(MAX_PROFILE_NAME) },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.profile_name_label)) },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(text.trim()) }, enabled = text.isNotBlank()) {
+                Text(stringResource(R.string.dialog_save))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calibrate_cancel)) } },
+    )
 }
 
 /** Live comparison: color A on the left, the color in the ring (B) on the right, then the verdict. */
@@ -551,12 +779,13 @@ private fun CompareSwatch(letter: String, rgb: Rgb, description: String) {
 private fun DebugLine(state: CameraColorState) {
     val reading = state.reading ?: return
     Text(
-        "ring %.3f  jitter %.3f  fps %.0f  first %s ms  locked %s".format(
+        "ring %.3f  jitter %.3f  fps %.0f  first %s ms  locked %s  profiles %s".format(
             reading.linear.luminance,
             reading.jitter,
             state.analyzedFps,
             state.firstReadingMs?.toString() ?: "-",
             if (state.locked) "yes" else "no",
+            if (state.supportsProfiles) "yes" else "no",
         ),
         color = HuenoColors.OnInkMuted,
         fontFamily = FontFamily.Monospace,

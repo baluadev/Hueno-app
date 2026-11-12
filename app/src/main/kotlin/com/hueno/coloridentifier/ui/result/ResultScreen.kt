@@ -58,6 +58,7 @@ import com.hueno.coloridentifier.ui.CaptureSource
 import com.hueno.coloridentifier.ui.HuenoColors
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.coloridentifier.ui.Speaker
+import com.hueno.coloridentifier.ui.ThumbnailImage
 import com.hueno.coloridentifier.ui.labelRes
 import com.hueno.coloridentifier.ui.tipRes
 import com.hueno.core.color.ColorMath
@@ -76,6 +77,7 @@ fun ResultScreen(
     onDelete: () -> Unit,
     onRename: (String?) -> Unit,
     onMove: (String?) -> Unit,
+    hexWithHash: Boolean = true,
     bannerUnitId: String? = null,
 ) {
     val rgb = capture.rgb
@@ -124,7 +126,21 @@ fun ResultScreen(
                     .background(Color(rgb.r, rgb.g, rgb.b))
                     // A hairline keeps very light colors visible against the paper background.
                     .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(24.dp)),
-            )
+                contentAlignment = Alignment.BottomStart,
+            ) {
+                // The object the color came from, so the swatch can be matched to a real thing.
+                capture.thumbnail?.let { file ->
+                    ThumbnailImage(
+                        file = file,
+                        contentDescription = stringResource(R.string.thumbnail_description),
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .size(84.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(2.dp, Color.White, RoundedCornerShape(16.dp)),
+                    )
+                }
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
@@ -157,7 +173,7 @@ fun ResultScreen(
             QualityNote(capture)
 
             Card {
-                CodeRow(stringResource(R.string.result_hex), rgb.hex)
+                CodeRow(stringResource(R.string.result_hex), rgb.hex, copyValue = if (hexWithHash) rgb.hex else rgb.hex.removePrefix("#"))
                 HorizontalDivider(color = HuenoColors.PaperLine)
                 CodeRow(stringResource(R.string.result_rgb), stringResource(R.string.rgb_value, rgb.r, rgb.g, rgb.b))
                 HorizontalDivider(color = HuenoColors.PaperLine)
@@ -273,7 +289,7 @@ private fun QualityNote(capture: Capture) {
 }
 
 @Composable
-private fun CodeRow(label: String, value: String) {
+private fun CodeRow(label: String, value: String, copyValue: String = value) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val copyLabel = stringResource(R.string.result_copy, label)
@@ -283,7 +299,7 @@ private fun CodeRow(label: String, value: String) {
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clickable(role = Role.Button) {
-                clipboard.setText(AnnotatedString(value))
+                clipboard.setText(AnnotatedString(copyValue))
                 Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
             }
             .semantics { contentDescription = "$copyLabel, $value" }

@@ -123,6 +123,9 @@ class Monetization(context: Context, val config: MonetizationConfig) {
     /** Whether one more color may be saved, given how many are saved already. */
     fun canSave(savedCount: Int): Boolean = _state.value.isPro || savedCount < ProRules.FREE_HISTORY_LIMIT
 
+    /** Whether one more calibration may be saved, given how many are saved already. */
+    fun canSaveProfile(savedCount: Int): Boolean = _state.value.isPro || savedCount < ProRules.FREE_PROFILE_LIMIT
+
     /** Opens the Google Play purchase sheet. Returns false when the product is not available. */
     fun buyPro(activity: Activity): Boolean = billing.buy(activity)
 

@@ -14,6 +14,9 @@ object ProRules {
     const val FREE_COMPARES_PER_DAY = 3
     const val FREE_HISTORY_LIMIT = 20
 
+    /** Saved calibrations a free user may keep. */
+    const val FREE_PROFILE_LIMIT = 1
+
     internal const val HOUR_MILLIS = 60L * 60L * 1000L
 
     /** Small backward clock steps (network time sync) are tolerated before a pass is voided. */

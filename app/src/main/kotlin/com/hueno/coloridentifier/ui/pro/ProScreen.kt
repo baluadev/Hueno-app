@@ -99,6 +99,8 @@ fun ProScreen(
                     ProReason.HISTORY_LIMIT ->
                         stringResource(R.string.pro_reason_history, ProRules.FREE_HISTORY_LIMIT)
                     ProReason.EXPORT -> stringResource(R.string.pro_reason_export)
+                    ProReason.PROFILE_LIMIT ->
+                        stringResource(R.string.pro_reason_profile, ProRules.FREE_PROFILE_LIMIT)
                     ProReason.MENU -> null
                 }
                 limit?.let { Text(it, color = HuenoColors.OnPaper, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
@@ -110,6 +112,7 @@ fun ProScreen(
                 Benefit(stringResource(R.string.pro_benefit_history))
                 Benefit(stringResource(R.string.pro_benefit_compare))
                 Benefit(stringResource(R.string.pro_benefit_export))
+                Benefit(stringResource(R.string.pro_benefit_profiles))
             }
 
             StatusNote(state)

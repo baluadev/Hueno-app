@@ -1,6 +1,8 @@
 package com.hueno.coloridentifier.ui
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -32,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hueno.coloridentifier.BuildConfig
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.camera.CameraScreen
 import com.hueno.coloridentifier.ui.history.HistoryScreen
@@ -39,6 +42,7 @@ import com.hueno.coloridentifier.ui.onboarding.OnboardingScreen
 import com.hueno.coloridentifier.ui.photo.PhotoScreen
 import com.hueno.coloridentifier.ui.pro.ProScreen
 import com.hueno.coloridentifier.ui.result.ResultScreen
+import com.hueno.coloridentifier.ui.settings.SettingsScreen
 
 @Composable
 fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
@@ -55,7 +59,9 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     val activity = LocalContext.current as? Activity
     val bannerUnitId = if (money.showBanners) viewModel.bannerUnitId else null
     // The detail and Pro screens are light and cover the whole window while open.
-    SystemBarIcons(darkScreen = dark && viewModel.openCapture == null && viewModel.proScreen == null)
+    SystemBarIcons(
+        darkScreen = dark && viewModel.openCapture == null && viewModel.proScreen == null && !viewModel.showSettings,
+    )
 
     LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
 
@@ -82,6 +88,9 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                             compareReference = viewModel.compareReference,
                             onCompareReference = viewModel::changeCompareReference,
                             onCapture = viewModel::captureFromCamera,
+                            canSaveProfile = viewModel::canSaveProfile,
+                            onProfileLimit = viewModel::onProfileLimit,
+                            onOpenSettings = viewModel::openSettings,
                         )
                         Tab.PHOTO -> PhotoScreen(onSave = viewModel::captureFromPhoto)
                         Tab.HISTORY -> {
@@ -120,7 +129,33 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
                 onDelete = { viewModel.delete(capture) },
                 onRename = { viewModel.rename(capture, it) },
                 onMove = { viewModel.moveToCollection(capture, it) },
+                hexWithHash = viewModel.hexWithHash,
                 bannerUnitId = bannerUnitId,
+            )
+        }
+    }
+
+    if (viewModel.showSettings) {
+        BackHandler { viewModel.closeSettings() }
+        val feedbackSubject = stringResource(R.string.settings_feedback_subject)
+        HuenoTheme(dark = false) {
+            SettingsScreen(
+                money = money,
+                hexWithHash = viewModel.hexWithHash,
+                versionName = BuildConfig.VERSION_NAME,
+                onHexWithHash = viewModel::changeHexWithHash,
+                onOpenPro = viewModel::openPro,
+                onPrivacy = { activity?.let(viewModel::showPrivacyOptions) },
+                onFeedback = viewModel.feedbackEmail?.let { address ->
+                    {
+                        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                            .putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
+                            .putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
+                        // No mail app installed is not an error worth showing; the row just does nothing.
+                        runCatching { context.startActivity(intent) }
+                    }
+                },
+                onClose = viewModel::closeSettings,
             )
         }
     }

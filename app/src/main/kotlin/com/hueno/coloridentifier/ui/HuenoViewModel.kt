@@ -3,6 +3,7 @@ package com.hueno.coloridentifier.ui
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,7 @@ import com.hueno.data.StoredCapture
 import com.hueno.monetization.Monetization
 import com.hueno.monetization.MonetizationConfig
 import com.hueno.monetization.MonetizationState
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,7 +37,7 @@ enum class Tab { CAMERA, PHOTO, HISTORY }
 enum class CaptureSource { CAMERA, PHOTO }
 
 /** Why the Pro screen is open. The limit reasons add a line explaining what was reached. */
-enum class ProReason { MENU, COMPARE_LIMIT, HISTORY_LIMIT, EXPORT }
+enum class ProReason { MENU, COMPARE_LIMIT, HISTORY_LIMIT, EXPORT, PROFILE_LIMIT }
 
 /** A saved color as the screens show it. The name is derived from the stored color. */
 data class Capture(
@@ -51,6 +53,8 @@ data class Capture(
     val label: String? = null,
     /** The collection it is filed under; null when it is in none. */
     val collection: String? = null,
+    /** A small picture of the object; null when there is none. */
+    val thumbnail: File? = null,
 ) {
     /** What to call this color in a list: the user's name for it, else its plain color name. */
     val title: String get() = label ?: name.plain
@@ -66,6 +70,7 @@ private fun StoredCapture.toCapture() = Capture(
     timeMillis = timeMillis,
     label = label,
     collection = collection,
+    thumbnail = thumbnail,
 )
 
 /** Navigation state, saved colors, the comparison reference, and Pro and ads. */
@@ -102,6 +107,16 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
     /** Color A when comparing; null when not comparing. Kept here so it survives leaving the camera. */
     var compareReference by mutableStateOf<Rgb?>(null)
         private set
+
+    var showSettings by mutableStateOf(false)
+        private set
+
+    /** Whether copying a hex code includes the leading #. */
+    var hexWithHash by mutableStateOf(prefs.getBoolean(KEY_HEX_WITH_HASH, true))
+        private set
+
+    /** Address for feedback email; null when none is configured. */
+    val feedbackEmail: String? = BuildConfig.FEEDBACK_EMAIL.takeIf { it.isNotBlank() }
 
     /** Non-null while the Pro screen is open. */
     var proScreen by mutableStateOf<ProReason?>(null)
@@ -172,19 +187,40 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
         openCapture = null
     }
 
-    fun captureFromCamera(reading: ColorReading) = save(reading.rgb, false, reading.confidence, reading.calibrated)
+    fun captureFromCamera(reading: ColorReading, picture: Bitmap?) =
+        save(reading.rgb, false, reading.confidence, reading.calibrated, picture)
 
-    fun captureFromPhoto(rgb: Rgb) = save(rgb, true, null, false)
+    fun captureFromPhoto(rgb: Rgb, picture: Bitmap?) = save(rgb, true, null, false, picture)
 
     /** Saves the color and opens it, or opens the Pro screen when the free limit is reached. */
-    private fun save(rgb: Rgb, fromPhoto: Boolean, confidence: Confidence?, calibrated: Boolean) {
+    private fun save(rgb: Rgb, fromPhoto: Boolean, confidence: Confidence?, calibrated: Boolean, picture: Bitmap?) {
         if (!monetization.canSave(captures.value.size)) {
             proScreen = ProReason.HISTORY_LIMIT
             return
         }
         viewModelScope.launch {
-            openCapture = repository.add(rgb, fromPhoto, confidence, calibrated).toCapture()
+            openCapture = repository.add(rgb, fromPhoto, confidence, calibrated, picture).toCapture()
         }
+    }
+
+    fun openSettings() {
+        showSettings = true
+    }
+
+    fun closeSettings() {
+        showSettings = false
+    }
+
+    fun changeHexWithHash(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_HEX_WITH_HASH, enabled).apply()
+        hexWithHash = enabled
+    }
+
+    /** Whether one more calibration may be saved, given how many are saved already. */
+    fun canSaveProfile(savedCount: Int): Boolean = monetization.canSaveProfile(savedCount)
+
+    fun onProfileLimit() {
+        proScreen = ProReason.PROFILE_LIMIT
     }
 
     fun delete(capture: Capture) {
@@ -283,5 +319,6 @@ class HuenoViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
         const val KEY_ONBOARDING_DONE = "onboarding_done"
+        const val KEY_HEX_WITH_HASH = "hex_with_hash"
     }
 }

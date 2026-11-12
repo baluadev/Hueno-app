@@ -70,6 +70,11 @@ class ReadingProcessor(window: Int = 8) {
         calibration = null
     }
 
+    /** Uses a calibration measured earlier, for example one restored from a saved profile. */
+    fun useCalibration(saved: Calibration) {
+        calibration = saved
+    }
+
     /** Forgets smoothing history, for example after the camera restarts. Calibration is kept. */
     fun reset() {
         smoother.reset()

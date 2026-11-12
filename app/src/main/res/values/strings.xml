@@ -34,6 +34,11 @@
     <string name="camera_capture">Capture color</string>
     <string name="camera_speak">Read color name aloud</string>
     <string name="camera_frozen">Frozen</string>
+    <string name="camera_frozen_hint">Tap or drag on the picture to read another spot.</string>
+    <string name="camera_issue_start">The camera could not be started.</string>
+    <string name="camera_issue_lock">This camera did not accept the lock.</string>
+    <string name="camera_issue_calibration">That did not look like white paper. Fill the ring with a white surface and try again.</string>
+    <string name="camera_issue_profile">That saved calibration could not be used on this camera.</string>
     <string name="sample_small">Small sample area</string>
     <string name="sample_medium">Medium sample area</string>
     <string name="sample_large">Large sample area</string>
@@ -69,7 +74,19 @@
     <string name="calibrate_now">Calibrate now</string>
     <string name="calibrate_clear">Clear calibration</string>
     <string name="calibrate_cancel">Cancel</string>
-    <string name="calibrate_note">Calibration lasts until you leave the camera.</string>
+    <string name="calibrate_done_title">Calibrated</string>
+    <string name="calibrate_done_body">Readings are now corrected for this light. It lasts until you leave the camera or the light changes.</string>
+    <string name="calibrate_again">Calibrate again</string>
+    <string name="calibrate_close">Close</string>
+    <string name="profile_save">Save for this place</string>
+    <string name="profile_saved_heading">Saved places</string>
+    <string name="profile_use">Use</string>
+    <string name="profile_delete">Delete %1$s</string>
+    <string name="profile_note">A saved calibration is right for the same light it was made in.</string>
+    <string name="profile_unsupported">This phone\'s camera cannot restore saved settings, so a calibration lasts for one session.</string>
+    <string name="profile_name_title">Name this place</string>
+    <string name="profile_name_body">Use the place and its light, such as \"Workshop, lamps on\".</string>
+    <string name="profile_name_label">Place</string>
 
     <!-- Captured color -->
     <string name="result_title">Captured color</string>
@@ -119,6 +136,8 @@
     <string name="pro_benefit_compare">Unlimited color comparisons</string>
     <string name="pro_benefit_export">Export your colors to CSV</string>
     <string name="pro_reason_export">Exporting to CSV is part of Pro.</string>
+    <string name="pro_reason_profile">You can keep %1$d saved calibration without Pro.</string>
+    <string name="pro_benefit_profiles">A saved calibration for every room</string>
     <string name="pro_buy_title">Buy Pro, yours to keep</string>
     <string name="pro_buy_subtitle">Pay once. No subscription.</string>
     <string name="pro_buy_unavailable">Not available right now. Check your connection.</string>
@@ -139,6 +158,20 @@
     <string name="pro_restore">Restore purchase</string>
     <string name="pro_open">Pro</string>
     <string name="pro_open_active">Pro on</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_hex_hash">Copy hex codes with #</string>
+    <string name="settings_hex_hash_on">Copies as #1F3A5F</string>
+    <string name="settings_hex_hash_off">Copies as 1F3A5F</string>
+    <string name="settings_pro_free">Remove ads and limits</string>
+    <string name="settings_pass_left">Pro pass running: %1$d h %2$d min left</string>
+    <string name="settings_privacy_body">Change your ad consent choice</string>
+    <string name="settings_feedback">Send feedback</string>
+    <string name="settings_feedback_body">Tell us what works and what does not</string>
+    <string name="settings_feedback_subject">Hueno feedback</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="thumbnail_description">Picture of the object</string>
 
     <!-- History -->
     <string name="history_title">History</string>

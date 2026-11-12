@@ -1,12 +1,17 @@
 package com.hueno.data
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.hueno.core.color.Confidence
 import com.hueno.core.color.ConfidenceIssue
 import com.hueno.core.color.ConfidenceLevel
 import com.hueno.core.color.Rgb
+import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 /** A color kept in history. */
 data class StoredCapture(
@@ -21,14 +26,20 @@ data class StoredCapture(
     val label: String? = null,
     /** The collection it is filed under; null when it is in none. */
     val collection: String? = null,
+    /** A small picture of the object; null when none was saved or the file is gone. */
+    val thumbnail: File? = null,
 )
 
 /** Saved colors, newest first. */
-class CaptureRepository internal constructor(private val dao: CaptureDao) {
+class CaptureRepository internal constructor(
+    private val dao: CaptureDao,
+    private val thumbnails: ThumbnailStore,
+) {
+    constructor(context: Context) : this(HuenoDatabase.get(context).captures(), ThumbnailStore(context))
 
-    constructor(context: Context) : this(HuenoDatabase.get(context).captures())
-
-    fun observeAll(): Flow<List<StoredCapture>> = dao.observeAll().map { rows -> rows.map(CaptureMapper::toStored) }
+    fun observeAll(): Flow<List<StoredCapture>> = dao.observeAll()
+        .map { rows -> rows.map { CaptureMapper.toStored(it).copy(thumbnail = thumbnails.existing(it.thumbnail)) } }
+        .flowOn(Dispatchers.IO)
 
     /** Saves a color and returns it with its new id. */
     suspend fun add(
@@ -36,14 +47,22 @@ class CaptureRepository internal constructor(private val dao: CaptureDao) {
         fromPhoto: Boolean,
         confidence: Confidence?,
         calibrated: Boolean,
+        thumbnail: Bitmap? = null,
         timeMillis: Long = System.currentTimeMillis(),
-    ): StoredCapture {
-        val entity = CaptureMapper.toEntity(rgb, fromPhoto, confidence, calibrated, timeMillis)
+    ): StoredCapture = withContext(Dispatchers.IO) {
+        // The picture is written first, so the row never points at a file that is not there yet.
+        val fileName = thumbnail?.let(thumbnails::save)
+        val entity = CaptureMapper.toEntity(rgb, fromPhoto, confidence, calibrated, timeMillis).copy(thumbnail = fileName)
         val id = dao.insert(entity)
-        return CaptureMapper.toStored(entity.copy(id = id))
+        CaptureMapper.toStored(entity.copy(id = id)).copy(thumbnail = thumbnails.existing(fileName))
     }
 
-    suspend fun delete(id: Long) = dao.delete(id)
+    /** Deletes a color and its picture. */
+    suspend fun delete(id: Long) = withContext(Dispatchers.IO) {
+        val fileName = dao.thumbnailOf(id)
+        dao.delete(id)
+        thumbnails.delete(fileName)
+    }
 
     /** Sets the user's own name for a color. Blank text clears it. */
     suspend fun rename(id: Long, label: String?) = dao.setLabel(id, CaptureMapper.clean(label))

@@ -1,12 +1,21 @@
 package com.hueno.camera
 
 import android.content.Context
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.TotalCaptureResult
+import android.hardware.camera2.params.ColorSpaceTransform
+import android.hardware.camera2.params.RggbChannelVector
 import android.os.SystemClock
 import android.util.Log
 import android.util.Size
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
@@ -20,13 +29,27 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.hueno.core.color.Calibration
+import com.hueno.core.color.ColorMath
+import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.ColorReading
 import com.hueno.core.color.ReadingProcessor
+import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+/** Something the camera could not do. The app turns each one into a message. */
+enum class CameraIssue {
+    START_FAILED,
+    LOCK_REJECTED,
+    /** The surface in the ring was too dark, too bright or not white enough to calibrate on. */
+    CALIBRATION_FAILED,
+    /** A saved calibration could not be applied on this camera. */
+    PROFILE_FAILED,
+}
 
 /** Live state of the color camera. */
 data class CameraColorState(
@@ -37,7 +60,12 @@ data class CameraColorState(
     val firstReadingMs: Long? = null,
     /** Frames analyzed per second, averaged over the last second. */
     val analyzedFps: Double = 0.0,
-    val error: String? = null,
+    val issue: CameraIssue? = null,
+    /**
+     * This camera can be put back into saved exposure and white-balance settings, which saved
+     * calibration profiles need. False on cameras without manual control.
+     */
+    val supportsProfiles: Boolean = false,
 )
 
 /**
@@ -78,8 +106,16 @@ class ColorCamera(private val context: Context) {
     @Volatile private var calibrateCountdown = -1
     @Volatile private var clearCalibrationRequested = false
     @Volatile private var resetRequested = false
+    @Volatile private var calibrationToUse: Calibration? = null
+
+    /** The calibration in effect, mirrored for reads from the UI thread. */
+    @Volatile private var activeCalibration: Calibration? = null
+
+    /** The most recent camera settings reported by the sensor, used when saving a profile. */
+    @Volatile private var lastResult: TotalCaptureResult? = null
 
     /** Binds preview and analysis to [owner] and starts producing readings. */
+    @OptIn(ExperimentalCamera2Interop::class)
     fun start(owner: LifecycleOwner, previewView: PreviewView) {
         startedAt = SystemClock.elapsedRealtime()
         val future = ProcessCameraProvider.getInstance(appContext)
@@ -92,7 +128,7 @@ class ColorCamera(private val context: Context) {
                     it.surfaceProvider = previewView.surfaceProvider
                 }
                 // Color sampling needs few pixels; a small frame keeps analysis fast.
-                val analysis = ImageAnalysis.Builder()
+                val analysisBuilder = ImageAnalysis.Builder()
                     .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setResolutionSelector(
@@ -105,18 +141,43 @@ class ColorCamera(private val context: Context) {
                             )
                             .build(),
                     )
-                    .build()
+                // Listens to what the sensor actually used for each frame.
+                Camera2Interop.Extender(analysisBuilder).setSessionCaptureCallback(
+                    object : CameraCaptureSession.CaptureCallback() {
+                        override fun onCaptureCompleted(
+                            session: CameraCaptureSession,
+                            request: CaptureRequest,
+                            result: TotalCaptureResult,
+                        ) {
+                            lastResult = result
+                        }
+                    },
+                )
+                val analysis = analysisBuilder.build()
                 analysis.setAnalyzer(analysisExecutor, ::analyze)
 
                 cameraProvider.unbindAll()
                 resetRequested = true
-                camera = cameraProvider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
-                _state.value = _state.value.copy(error = null, locked = false)
+                val bound = cameraProvider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
+                camera = bound
+                _state.value = _state.value.copy(issue = null, locked = false, supportsProfiles = hasManualControl(bound))
             } catch (e: Exception) {
                 Log.e(TAG, "Could not start the camera", e)
-                _state.value = _state.value.copy(error = e.message ?: "Could not start the camera")
+                _state.value = _state.value.copy(issue = CameraIssue.START_FAILED)
             }
         }, ContextCompat.getMainExecutor(appContext))
+    }
+
+    /** Saved profiles need both manual exposure and manual color correction. */
+    @OptIn(ExperimentalCamera2Interop::class)
+    private fun hasManualControl(camera: Camera): Boolean = try {
+        val capabilities = Camera2CameraInfo.from(camera.cameraInfo)
+            .getCameraCharacteristic(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+        capabilities != null &&
+            CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR in capabilities &&
+            CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING in capabilities
+    } catch (e: Exception) {
+        false
     }
 
     private fun analyze(image: ImageProxy) {
@@ -138,7 +199,14 @@ class ColorCamera(private val context: Context) {
             if (clearCalibrationRequested) {
                 clearCalibrationRequested = false
                 processor.clearCalibration()
+                activeCalibration = null
             }
+            calibrationToUse?.let { saved ->
+                calibrationToUse = null
+                processor.useCalibration(saved)
+                activeCalibration = saved
+            }
+
             val reading = processor.process(sample)
 
             // Calibrate only after the lock has had time to take effect and the smoothing
@@ -148,8 +216,10 @@ class ColorCamera(private val context: Context) {
                 calibrateCountdown = countdown - 1
             } else if (countdown == 0) {
                 calibrateCountdown = -1
-                if (!processor.calibrateFromCurrent()) {
-                    _state.value = _state.value.copy(error = CALIBRATION_FAILED)
+                if (processor.calibrateFromCurrent()) {
+                    activeCalibration = processor.calibration
+                } else {
+                    _state.value = _state.value.copy(issue = CameraIssue.CALIBRATION_FAILED)
                 }
             }
             val now = SystemClock.elapsedRealtime()
@@ -176,6 +246,21 @@ class ColorCamera(private val context: Context) {
     }
 
     /**
+     * Names a spot in a frozen frame. [argbPixels] are the pixels around the spot, taken from
+     * the picture on screen. The current calibration is applied, and the confidence is the one
+     * the frame was frozen with, since the light is the same across the frame.
+     */
+    fun readingFromPixels(argbPixels: IntArray): ColorReading? {
+        val base = _state.value.reading ?: return null
+        if (argbPixels.isEmpty()) return null
+        val calibration = activeCalibration
+        val mean = ColorMath.averageLinear(argbPixels)
+        val corrected = calibration?.apply(mean) ?: mean
+        val rgb = ColorMath.toSrgb(corrected)
+        return ColorReading(rgb, ColorNamer.name(rgb), base.confidence, corrected, base.jitter, calibration != null)
+    }
+
+    /**
      * Holds or releases auto exposure and auto white balance.
      * Some devices accept the request and still drift; callers should treat the lock as a request
      * and watch the readings.
@@ -183,18 +268,25 @@ class ColorCamera(private val context: Context) {
     @OptIn(ExperimentalCamera2Interop::class)
     fun setLocked(locked: Boolean) {
         val control = camera?.cameraControl ?: return
-        val options = CaptureRequestOptions.Builder()
-            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, locked)
-            .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, locked)
-            .build()
-        val result = Camera2CameraControl.from(control).setCaptureRequestOptions(options)
+        val camera2 = Camera2CameraControl.from(control)
+        val result = if (locked) {
+            camera2.setCaptureRequestOptions(
+                CaptureRequestOptions.Builder()
+                    .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)
+                    .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, true)
+                    .build(),
+            )
+        } else {
+            // Drops every override, including manual settings from a saved profile.
+            camera2.clearCaptureRequestOptions()
+        }
         result.addListener({
             try {
                 result.get()
-                _state.value = _state.value.copy(locked = locked, error = null)
+                _state.value = _state.value.copy(locked = locked, issue = null)
             } catch (e: Exception) {
                 Log.w(TAG, "Lock request failed", e)
-                _state.value = _state.value.copy(error = "This camera did not accept the lock")
+                _state.value = _state.value.copy(issue = CameraIssue.LOCK_REJECTED)
             }
         }, ContextCompat.getMainExecutor(appContext))
     }
@@ -215,6 +307,74 @@ class ColorCamera(private val context: Context) {
         setLocked(false)
     }
 
+    /**
+     * Captures the current calibration together with the camera settings it depends on.
+     * Returns null when there is no calibration, the camera cannot restore settings, or the
+     * sensor has not reported them.
+     */
+    fun snapshotProfile(name: String): CalibrationProfile? {
+        val calibration = activeCalibration ?: return null
+        if (!_state.value.supportsProfiles) return null
+        val result = lastResult ?: return null
+        val exposure = result.get(CaptureResult.SENSOR_EXPOSURE_TIME) ?: return null
+        val sensitivity = result.get(CaptureResult.SENSOR_SENSITIVITY) ?: return null
+        val gains = result.get(CaptureResult.COLOR_CORRECTION_GAINS) ?: return null
+        val transform = result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM) ?: return null
+        val elements = IntArray(18)
+        transform.copyElements(elements, 0)
+        return CalibrationProfile(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            calibration = calibration,
+            exposureNanos = exposure,
+            sensitivity = sensitivity,
+            colorGains = listOf(gains.red, gains.greenEven, gains.greenOdd, gains.blue),
+            colorTransform = elements.toList(),
+        ).takeIf { it.isUsable() }
+    }
+
+    /**
+     * Puts the camera back into the settings a profile was measured with and uses its
+     * calibration. Correct only under the same light the profile was saved in.
+     */
+    @OptIn(ExperimentalCamera2Interop::class)
+    fun applyProfile(profile: CalibrationProfile) {
+        val control = camera?.cameraControl
+        if (control == null || !_state.value.supportsProfiles || !profile.isUsable()) {
+            _state.value = _state.value.copy(issue = CameraIssue.PROFILE_FAILED)
+            return
+        }
+        val g = profile.colorGains
+        val options = CaptureRequestOptions.Builder()
+            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, profile.exposureNanos)
+            .setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, profile.sensitivity)
+            .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
+            .setCaptureRequestOption(
+                CaptureRequest.COLOR_CORRECTION_MODE,
+                CameraMetadata.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX,
+            )
+            .setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, RggbChannelVector(g[0], g[1], g[2], g[3]))
+            .setCaptureRequestOption(
+                CaptureRequest.COLOR_CORRECTION_TRANSFORM,
+                ColorSpaceTransform(profile.colorTransform.toIntArray()),
+            )
+            .build()
+        calibrateCountdown = -1
+        val result = Camera2CameraControl.from(control).setCaptureRequestOptions(options)
+        result.addListener({
+            try {
+                result.get()
+                calibrationToUse = profile.calibration
+                resetRequested = true
+                _state.value = _state.value.copy(locked = true, issue = null)
+            } catch (e: Exception) {
+                Log.w(TAG, "Profile could not be applied", e)
+                _state.value = _state.value.copy(issue = CameraIssue.PROFILE_FAILED)
+            }
+        }, ContextCompat.getMainExecutor(appContext))
+    }
+
     fun setTorch(on: Boolean) {
         camera?.cameraControl?.enableTorch(on)
     }
@@ -232,6 +392,5 @@ class ColorCamera(private val context: Context) {
 
         /** Frames to wait between asking for the lock and measuring the white reference. */
         const val SETTLE_FRAMES = 20
-        const val CALIBRATION_FAILED = "That did not look like white paper. Fill the ring with a white surface and try again."
     }
 }

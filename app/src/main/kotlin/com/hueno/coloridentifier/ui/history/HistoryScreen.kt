@@ -41,6 +41,7 @@ import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.AdBanner
 import com.hueno.coloridentifier.ui.Capture
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.ThumbnailImage
 
 /**
  * Saved colors, newest first, with an optional collection filter.
@@ -174,13 +175,33 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Box(
-            Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(rgb.r, rgb.g, rgb.b))
-                .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(12.dp)),
-        )
+        Box(Modifier.size(48.dp)) {
+            val file = capture.thumbnail
+            if (file == null) {
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(rgb.r, rgb.g, rgb.b))
+                        .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(12.dp)),
+                )
+            } else {
+                // The object on the left, with its color as a chip on the corner.
+                ThumbnailImage(
+                    file = file,
+                    contentDescription = null,
+                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)),
+                )
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(22.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(Color(rgb.r, rgb.g, rgb.b))
+                        .border(2.dp, HuenoColors.Card, RoundedCornerShape(7.dp)),
+                )
+            }
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 capture.title,

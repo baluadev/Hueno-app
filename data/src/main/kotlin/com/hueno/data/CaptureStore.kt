@@ -35,6 +35,8 @@ internal data class CaptureEntity(
     val label: String? = null,
     /** The collection this color is filed under; null when it is in none. */
     val collection: String? = null,
+    /** File name of a small picture of the object, kept by ThumbnailStore; null when there is none. */
+    val thumbnail: String? = null,
 )
 
 @Dao
@@ -53,9 +55,12 @@ internal interface CaptureDao {
 
     @Query("UPDATE captures SET collection = :collection WHERE id = :id")
     suspend fun setCollection(id: Long, collection: String?)
+
+    @Query("SELECT thumbnail FROM captures WHERE id = :id")
+    suspend fun thumbnailOf(id: Long): String?
 }
 
-@Database(entities = [CaptureEntity::class], version = 2)
+@Database(entities = [CaptureEntity::class], version = 3)
 internal abstract class HuenoDatabase : RoomDatabase() {
     abstract fun captures(): CaptureDao
 
@@ -68,12 +73,19 @@ internal abstract class HuenoDatabase : RoomDatabase() {
             }
         }
 
+        /** Version 3 adds a small picture of the object that was captured. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE captures ADD COLUMN thumbnail TEXT")
+            }
+        }
+
         @Volatile
         private var instance: HuenoDatabase? = null
 
         fun get(context: Context): HuenoDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, HuenoDatabase::class.java, "hueno.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
                 .also { instance = it }
         }

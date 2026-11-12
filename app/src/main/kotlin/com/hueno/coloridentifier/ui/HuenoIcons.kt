@@ -54,5 +54,11 @@ object HuenoIcons {
     val Approx = stroke("Approx", "M5 9c2-2 4-2 7 0s5 2 7 0", "M5 15c2-2 4-2 7 0s5 2 7 0", width = 2.4f)
     val NotEqual = stroke("NotEqual", "M5 9h14M5 15h14M16 5 8 19", width = 2.4f)
     val Trash = stroke("Trash", "M5 7h14", "M10 7V5h4v2", "M7 7l1 12h8l1-12")
+    val Settings = stroke(
+        "Settings",
+        "M4 7h10M18 7h2M4 17h2M10 17h10",
+        "M14 7a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+        "M6 17a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+    )
     val Alert = stroke("Alert", CIRCLE_8, "M12 8v5", "M12 16v.5", width = 2.2f)
 }

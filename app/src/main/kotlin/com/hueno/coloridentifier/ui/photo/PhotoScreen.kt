@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -65,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.Thumbnails
 import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.Rgb
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +85,7 @@ private const val MAX_ZOOM = 12f
 private const val PIXEL_ZOOM = 4f
 
 @Composable
-fun PhotoScreen(onSave: (Rgb) -> Unit) {
+fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
     val context = LocalContext.current
     var uriText by rememberSaveable { mutableStateOf<String?>(null) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -284,7 +287,7 @@ fun PhotoScreen(onSave: (Rgb) -> Unit) {
             modifier = Modifier.padding(horizontal = 20.dp),
         )
         Button(
-            onClick = { onSave(rgb) },
+            onClick = { onSave(rgb, Thumbnails.around(photo, pointX, pointY)) },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp).height(52.dp),
             colors = ButtonDefaults.buttonColors(containerColor = HuenoColors.OnInk, contentColor = HuenoColors.Ink),
         ) { Text(stringResource(R.string.photo_save), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
@@ -361,7 +364,21 @@ private fun decode(context: Context, uri: Uri): Bitmap? = try {
             if (longest > MAX_SIDE) decoder.setTargetSampleSize((longest + MAX_SIDE - 1) / MAX_SIDE)
         }
     } else {
-        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        // Older Android does not apply the photo's stored orientation, so it is done by hand.
+        val decoded = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        val degrees = context.contentResolver.openInputStream(uri)?.use { stream ->
+            when (ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                else -> 0f
+            }
+        } ?: 0f
+        if (decoded != null && degrees != 0f) {
+            Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, Matrix().apply { postRotate(degrees) }, true)
+        } else {
+            decoded
+        }
     }
 } catch (e: Exception) {
     null
