@@ -1,0 +1,93 @@
+<resources>
+    <string name="app_name">Hueno</string>
+
+    <!-- Navigation -->
+    <string name="tab_camera">Camera</string>
+    <string name="tab_photo">Photo</string>
+    <string name="tab_history">History</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+
+    <!-- Camera permission -->
+    <string name="permission_title">Camera access</string>
+    <string name="permission_body">Hueno uses the camera to read colors. Frames are analyzed on this phone and never leave it.</string>
+    <string name="permission_allow">Allow camera</string>
+
+    <!-- Camera screen -->
+    <string name="camera_starting">Starting camera…</string>
+    <string name="camera_calibrate">Calibrate with white paper</string>
+    <string name="camera_torch">Flashlight</string>
+    <string name="camera_freeze">Freeze</string>
+    <string name="camera_resume">Resume</string>
+    <string name="camera_capture">Capture color</string>
+    <string name="camera_speak">Read color name aloud</string>
+    <string name="camera_frozen">Frozen</string>
+    <string name="sample_small">Small sample area</string>
+    <string name="sample_medium">Medium sample area</string>
+    <string name="sample_large">Large sample area</string>
+    <string name="sample_small_short">S</string>
+    <string name="sample_medium_short">M</string>
+    <string name="sample_large_short">L</string>
+
+    <!-- Confidence -->
+    <string name="confidence_good">Good reading</string>
+    <string name="confidence_fair">Fair reading</string>
+    <string name="confidence_poor">Poor reading</string>
+    <string name="confidence_calibrated">Calibrated</string>
+    <string name="issue_too_dark">Too dark, add light</string>
+    <string name="issue_too_bright">Too bright, reduce glare</string>
+    <string name="issue_unsteady">Hold the phone steady</string>
+    <string name="issue_mixed_area">More than one color in the ring</string>
+    <string name="issue_not_calibrated">Calibrate with white paper for a better reading</string>
+
+    <!-- Compare -->
+    <string name="compare_start">Compare</string>
+    <string name="compare_end">Stop</string>
+    <string name="compare_same">Same</string>
+    <string name="compare_close">Close</string>
+    <string name="compare_different">Different</string>
+    <string name="compare_a">A</string>
+    <string name="compare_b">B</string>
+    <string name="compare_swatch_a">Color A, %1$s</string>
+    <string name="compare_swatch_b">Color B, %1$s</string>
+
+    <!-- Calibration -->
+    <string name="calibrate_title">Point at something white</string>
+    <string name="calibrate_body">Plain printer paper works. Fill the ring, then tap the button. Hueno corrects for the light you are in.</string>
+    <string name="calibrate_now">Calibrate now</string>
+    <string name="calibrate_clear">Clear calibration</string>
+    <string name="calibrate_cancel">Cancel</string>
+    <string name="calibrate_note">Calibration lasts until you leave the camera.</string>
+
+    <!-- Captured color -->
+    <string name="result_title">Captured color</string>
+    <string name="result_closest">Closest named shade: %1$s</string>
+    <string name="result_hex">HEX</string>
+    <string name="result_rgb">RGB</string>
+    <string name="result_hsl">HSL</string>
+    <string name="result_copy">Copy %1$s</string>
+    <string name="result_copied">%1$s copied</string>
+    <string name="result_from_photo">Picked from a photo. Exact pixel value.</string>
+    <string name="result_compare">Compare with camera</string>
+    <string name="result_delete">Delete</string>
+    <string name="rgb_value">%1$d, %2$d, %3$d</string>
+    <string name="hsl_value">%1$d°, %2$d%%, %3$d%%</string>
+
+    <!-- Photo -->
+    <string name="photo_title">Photo</string>
+    <string name="photo_choose">Choose a photo</string>
+    <string name="photo_choose_another">Choose another</string>
+    <string name="photo_empty_title">Pick a color from a photo</string>
+    <string name="photo_empty_body">Open a photo or screenshot, then tap or drag to read any color in it.</string>
+    <string name="photo_hint">Tap or drag on the photo to move the ring.</string>
+    <string name="photo_save">Save this color</string>
+    <string name="photo_error">That photo could not be opened.</string>
+    <string name="photo_description">Selected photo</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_empty_title">No colors yet</string>
+    <string name="history_empty_body">Colors you capture with the camera or save from a photo appear here.</string>
+    <string name="history_count">%1$d saved</string>
+    <string name="detail_and_hex">%1$s · %2$s</string>
+</resources>
