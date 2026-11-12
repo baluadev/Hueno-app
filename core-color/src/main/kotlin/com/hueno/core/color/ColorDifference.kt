@@ -114,8 +114,14 @@ object ColorDifference {
         val dC = lb.c - la.c
         if (abs(dC) >= 0.03) parts += if (dC > 0) "more vivid" else "duller"
 
+        val familyA = nameA.family.label.lowercase()
         val familyB = nameB.family.label.lowercase()
-        return if (nameA.family != nameB.family) {
+        return if (nameA.family != nameB.family && verdict == Verdict.CLOSE) {
+            // Close colors on either side of a family border, such as a gray-blue mug read twice.
+            // "A is gray. B is blue" would contradict the verdict, so speak from A's family.
+            val tail = if (parts.isEmpty()) "" else ", and is ${parts.joinToString(" and ")}"
+            "Both are close to $familyA. B leans a little toward $familyB$tail."
+        } else if (nameA.family != nameB.family) {
             val tail = if (parts.isEmpty()) "" else ", and ${parts.joinToString(" and ")}"
             "A is ${nameA.family.label.lowercase()}. B is $familyB$tail."
         } else if (parts.isEmpty()) {

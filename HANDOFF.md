@@ -255,3 +255,33 @@ Giới hạn còn lại:
 - Lý do từ chối được tách riêng (`CalibrationProblem`): quá sáng, quá tối, không đều, có màu. Mỗi lý do có câu hướng dẫn riêng. Lý do: giấy sát đèn vàng bị cháy sáng, trước đây app báo "không giống giấy trắng" nên người dùng không biết phải dời đèn ra.
 - Đã đo dưới đèn vàng của chủ dự án: giấy ngả vàng rõ ra 1,37 và được chấp nhận. Một bóng vàng hơn (khoảng 2700K, đặt rất gần) có thể vượt 1,6; nếu người dùng báo không hiệu chuẩn được dưới đèn ngủ thì xem lại con số này. Hai test cũ dùng mẫu "giấy ấm" ratio 1,56–1,6 đã được đổi sang 1,33.
 - Câu báo "quá sáng" và "quá tối" mới chỉ kiểm bằng unit test, chưa hiện lên trên máy thật.
+
+### Các bài thử còn lại trên Flip4 (12/11/2026 buổi tối, đèn trần, chưa commit)
+
+Chủ dự án cầm máy, tôi điều khiển qua `adb`. Script hỗ trợ (để ở `/tmp/hueno`, không nằm trong repo): chụp màn hình chính, chạm theo chữ trên màn hình, đọc tên màu, bấm Calibrate và đọc nhật ký.
+
+| Bài | Kết quả |
+|---|---|
+| 2 Ổn định | Đạt. Đứng yên trên vật thì tên không đổi, jitter ≤ 0,002. |
+| 3 Đặt tên (chưa hiệu chuẩn) | Xanh lá, xanh dương, vàng, đen đúng họ màu. Quả bông đỏ thẫm (#4E0E08) bị gọi là "Dark brown", **đã sửa** (xem dưới). Đồ chơi vàng chanh ra "Dark yellow": đúng họ nhưng tối hơn mắt thấy. |
+| 4 Khóa có giữ | **Đạt.** Ghi mỗi giây trong 16 giây sau khi hiệu chuẩn: thời gian phơi sáng, ISO, hệ số cân bằng trắng không đổi; `CONTROL_AWB_STATE` và `CONTROL_AE_STATE` đều ở trạng thái LOCKED. Lia sang vật khác rồi quay lại, giấy vẫn đọc "White". Sau hiệu chuẩn, quả bông đọc "Red". |
+| 10 Đóng băng | Đạt. Chạm các điểm khác nhau thì màu đổi theo, không crash. |
+| 11 So hai màu | Đạt về logic: đỏ với cốc xám xanh ra "Different" kèm câu giải thích đúng. Chữ "Different" bị bẻ giữa từ, **đã sửa** bố cục. |
+| 12 Ảnh | Đạt. Kéo vòng ngắm thì đọc đúng theo vùng; nút zoom giữ vòng ngắm đúng điểm. Zoom bằng hai ngón do chủ dự án thử, chưa có ghi nhận. |
+| 14 TalkBack | Không bật TalkBack trên máy cá nhân. Kiểm cây trợ năng ở ba tab: mọi nút bấm của app đều có tên. Chỉ banner AdMob (WebView của bên thứ ba) không có tên. Chưa nghe TalkBack đọc thực tế. |
+| 15 Quảng cáo | Đạt. Banner thử hiện ở History. Xem video thử thì có Pro 6 giờ và banner ẩn. Máy đang có Pro tạm thời đến khoảng 2:30 sáng 13/11. |
+
+Lỗi tìm thấy và đã sửa trong lượt này:
+- **Hiệu chuẩn thất bại vẫn để camera khóa.** Phơi sáng và cân bằng trắng bị giữ theo vật vừa bị từ chối, trong khi app không có hiệu chuẩn nào. Mọi màu đọc sau đó đều sai mà không có dấu hiệu gì. Giờ hiệu chuẩn thất bại sẽ mở khóa.
+- **Đỏ đậm bị gọi là nâu.** `ColorNamer` xếp màu có sắc độ 12–38° vào nâu khi L < 0,50 và C < 0,13. Màu đỏ càng tối thì C càng nhỏ, nên giờ dùng tỷ lệ C/L < 0,21: các màu nâu ở mức 0,13–0,17, đỏ tối ở mức 0,24–0,41. Đã thêm 5 mẫu vào bộ tên chuẩn.
+- Câu "Calibration was cleared…" tự ẩn sau 8 giây thay vì hiện mãi.
+- Khung so màu: dòng kết quả nằm riêng và trải hết chiều ngang.
+- Ghi nhật ký `lock raw …` mỗi giây khi đang khóa (phơi sáng, ISO, hệ số cân bằng trắng, trạng thái khóa), để kiểm khóa trên các máy khác.
+
+Sửa thêm theo yêu cầu (cùng tối 12/11):
+- Nút đóng bảng hiệu chuẩn chuyển thành nút X ("Close calibration") cạnh tiêu đề, nên luôn nhìn thấy dù có bao nhiêu hồ sơ đã lưu. Đã kiểm trên Flip4.
+- So màu: khi kết luận là "Close" mà hai màu nằm hai bên ranh giới họ màu, câu giải thích nói "Both are close to gray. B leans a little toward blue…" thay vì "A is gray. B is blue". Có unit test. Đã kiểm trên Flip4: di vòng ngắm trên thân cốc ra "Close" kèm "Both are close to blue. B leans a little toward gray."; lúc vòng ngắm lệch hẳn ra nền thì ra "Different" kèm "A is blue. B is gray…", đúng như mong đợi.
+
+Ghi nhận, chưa sửa:
+- Ánh sáng hỗn hợp: hiệu chuẩn gần đèn vàng rồi đọc dưới đèn trần thì giấy ngả xanh. Đúng về vật lý, nhưng nên dặn người dùng hiệu chuẩn ngay tại chỗ sẽ đọc màu.
+- Chưa thử dưới ánh sáng ban ngày (hẹn làm ngày 13/11).

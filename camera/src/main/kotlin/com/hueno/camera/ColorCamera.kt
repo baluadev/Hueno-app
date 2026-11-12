@@ -256,7 +256,9 @@ class ColorCamera(private val context: Context) {
                         CalibrationProblem.TOO_DARK -> CameraIssue.CALIBRATION_TOO_DARK
                         else -> CameraIssue.CALIBRATION_FAILED
                     }
-                    _state.value = _state.value.copy(issue = issue)
+                    // Without a calibration the lock only freezes the camera at settings chosen
+                    // for the rejected surface, so give exposure and white balance back.
+                    ContextCompat.getMainExecutor(appContext).execute { setLocked(false, issue) }
                 }
             }
             val now = SystemClock.elapsedRealtime()
@@ -267,6 +269,7 @@ class ColorCamera(private val context: Context) {
                 fps = fpsFrames * 1000.0 / (now - fpsWindowStart)
                 fpsFrames = 0
                 fpsWindowStart = now
+                logSensorState()
             }
 
             // The UI does not need more than about ten updates a second.
@@ -450,6 +453,33 @@ class ColorCamera(private val context: Context) {
                 _state.value = _state.value.copy(issue = CameraIssue.PROFILE_FAILED)
             }
         }, ContextCompat.getMainExecutor(appContext))
+    }
+
+    /**
+     * Once a second while locked: what the sensor reports it is doing, to check on real devices
+     * whether the exposure and white-balance lock actually holds.
+     */
+    private fun logSensorState() {
+        if (!_state.value.locked) return
+        val result = lastResult ?: return
+        val raw = processor.lastMeasured ?: return
+        val gains = result.get(CaptureResult.COLOR_CORRECTION_GAINS)
+        Log.i(
+            TAG,
+            "lock raw r=%.3f g=%.3f b=%.3f awbState=%s aeState=%s awbLock=%s aeLock=%s exp=%s iso=%s gains=%s".format(
+                java.util.Locale.US, raw.r, raw.g, raw.b,
+                result.get(CaptureResult.CONTROL_AWB_STATE), result.get(CaptureResult.CONTROL_AE_STATE),
+                result.get(CaptureResult.CONTROL_AWB_LOCK), result.get(CaptureResult.CONTROL_AE_LOCK),
+                result.get(CaptureResult.SENSOR_EXPOSURE_TIME), result.get(CaptureResult.SENSOR_SENSITIVITY),
+                gains?.let { "%.3f/%.3f/%.3f".format(java.util.Locale.US, it.red, it.greenEven, it.blue) },
+            ),
+        )
+    }
+
+    /** Hides [issue] if it is still the one shown. For notices that only need a moment. */
+    fun dismissIssue(issue: CameraIssue) {
+        val current = _state.value
+        if (current.issue == issue) _state.value = current.copy(issue = null)
     }
 
     fun setTorch(on: Boolean) {

@@ -86,7 +86,7 @@
     <string name="calibrate_done_title">Calibrated</string>
     <string name="calibrate_done_body">Readings are now corrected for this light. It lasts until you leave the camera or the light changes.</string>
     <string name="calibrate_again">Calibrate again</string>
-    <string name="calibrate_close">Close</string>
+    <string name="calibrate_close_panel">Close calibration</string>
     <string name="profile_save">Save for this place</string>
     <string name="profile_saved_heading">Saved places</string>
     <string name="profile_use">Use</string>

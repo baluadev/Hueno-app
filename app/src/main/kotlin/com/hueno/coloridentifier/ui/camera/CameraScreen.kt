@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,9 +103,11 @@ import com.hueno.core.color.ConfidenceLevel
 import com.hueno.core.color.Rgb
 import com.hueno.core.color.Verdict
 import kotlin.math.max
+import kotlinx.coroutines.delay
 import kotlin.math.min
 
 private const val MAX_PROFILE_NAME = 40
+private const val NOTICE_MILLIS = 8_000L
 
 /**
  * @param onCapture receives the reading and, when available, a small picture of the object.
@@ -255,6 +258,16 @@ private fun LiveCamera(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             camera.shutdown()
+        }
+    }
+
+    // "Calibration was cleared" is a notice, not a lasting state; it would otherwise stay for as
+    // long as the camera is used.
+    LaunchedEffect(state.issue) {
+        val issue = state.issue
+        if (issue == CameraIssue.CALIBRATION_CLEARED_PAUSED || issue == CameraIssue.CALIBRATION_CLEARED_TORCH) {
+            delay(NOTICE_MILLIS)
+            camera.dismissIssue(issue)
         }
     }
 
@@ -681,12 +694,18 @@ private fun CalibrationPanel(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            stringResource(if (calibrated) R.string.calibrate_done_title else R.string.calibrate_title),
-            color = HuenoColors.OnInk,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
-        )
+        // Close sits beside the title, so it stays in reach however long the list of saved places
+        // grows; at the bottom it ended up below the fold once one place was saved.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(if (calibrated) R.string.calibrate_done_title else R.string.calibrate_title),
+                color = HuenoColors.OnInk,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            RoundIconButton(HuenoIcons.Close, stringResource(R.string.calibrate_close_panel), active = false, onClick = onDone)
+        }
         Text(
             stringResource(if (calibrated) R.string.calibrate_done_body else R.string.calibrate_body),
             color = HuenoColors.OnInkMuted,
@@ -750,15 +769,10 @@ private fun CalibrationPanel(
             Text(stringResource(R.string.profile_unsupported), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
         }
 
-        // Stacked rather than side by side: "Clear calibration" does not fit half a narrow phone,
-        // and grows further with large text.
         if (calibrated) {
             OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.calibrate_clear), color = HuenoColors.OnInk)
             }
-        }
-        OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.calibrate_close), color = HuenoColors.OnInk)
         }
     }
 }
@@ -808,22 +822,35 @@ private fun ComparePanel(reference: Rgb, current: Rgb, onSpeak: (String) -> Unit
         Verdict.CLOSE -> HuenoIcons.Approx
         Verdict.DIFFERENT -> HuenoIcons.NotEqual
     }
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    // The verdict gets a line of its own: beside the swatches a narrow phone broke "Different"
+    // in the middle of the word.
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        CompareSwatch(stringResource(R.string.compare_a), reference, stringResource(R.string.compare_swatch_a, nameA))
-        CompareSwatch(stringResource(R.string.compare_b), current, stringResource(R.string.compare_swatch_b, nameB))
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(icon, contentDescription = null, tint = HuenoColors.OnInk, modifier = Modifier.size(28.dp))
-                Text(verdict, color = HuenoColors.OnInk, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, contentDescription = null, tint = HuenoColors.OnInk, modifier = Modifier.size(28.dp))
+            Text(
+                verdict,
+                color = HuenoColors.OnInk,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            RoundIconButton(HuenoIcons.Speak, stringResource(R.string.camera_speak), active = false) {
+                onSpeak("$verdict. ${result.explanation}")
             }
-            Text(result.explanation, color = HuenoColors.OnInk, fontSize = 14.sp, lineHeight = 18.sp)
         }
-        RoundIconButton(HuenoIcons.Speak, stringResource(R.string.camera_speak), active = false) {
-            onSpeak("$verdict. ${result.explanation}")
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CompareSwatch(stringResource(R.string.compare_a), reference, stringResource(R.string.compare_swatch_a, nameA))
+            CompareSwatch(stringResource(R.string.compare_b), current, stringResource(R.string.compare_swatch_b, nameB))
+            Text(
+                result.explanation,
+                color = HuenoColors.OnInk,
+                fontSize = 14.sp,
+                lineHeight = 18.sp,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

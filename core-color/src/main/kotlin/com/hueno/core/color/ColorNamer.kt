@@ -60,7 +60,10 @@ object ColorNamer {
             h >= 350 || h < 12 -> if (c.l >= 0.62) ColorFamily.PINK else ColorFamily.RED
             h < 38 -> when {
                 c.l >= 0.74 -> ColorFamily.PINK
-                c.l < 0.50 && c.c < 0.13 -> ColorFamily.BROWN
+                // Chroma shrinks as a color darkens, so a deep red has little chroma in absolute
+                // terms. Judge it against lightness: browns here sit at 0.13 to 0.17, dark reds
+                // (maroon, a red pom-pom read in dim light) at 0.24 and above.
+                c.l < 0.50 && c.c / c.l < 0.21 -> ColorFamily.BROWN
                 else -> ColorFamily.RED
             }
             h < 75 -> if (c.l < 0.60 || (c.l < 0.72 && c.c < 0.09)) ColorFamily.BROWN else ColorFamily.ORANGE

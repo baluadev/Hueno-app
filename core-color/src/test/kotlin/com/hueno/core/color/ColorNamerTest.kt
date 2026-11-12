@@ -32,6 +32,12 @@ class ColorNamerTest {
         "#8B4513" to "Reddish brown",
         "#8B4A2B" to "Reddish brown",
         "#5C4033" to "Dark brown",
+        "#800000" to "Dark red",
+        "#4A2C2A" to "Dark brown",
+        "#704241" to "Brown",
+        // A red pom-pom read without calibration on a Galaxy Z Flip4, once called "Dark brown".
+        "#4E0E08" to "Dark red",
+        "#581F14" to "Dark red",
     )
 
     @Test

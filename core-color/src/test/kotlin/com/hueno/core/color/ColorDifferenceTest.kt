@@ -41,6 +41,19 @@ class ColorDifferenceTest {
         assertTrue(result.explanation, result.explanation.contains("lighter"))
     }
 
+    /** Seen on a Galaxy Z Flip4: one gray-blue mug read twice was "Close", yet explained as gray versus blue. */
+    @Test
+    fun closeColorsAcrossAFamilyBorderAreNotCalledDifferentColors() {
+        val gray = Rgb.parse("#8C949A")
+        val blue = Rgb.parse("#7F93A6")
+        // The pair has to straddle the gray-blue border for this test to mean anything.
+        assertEquals(ColorFamily.GRAY, ColorNamer.name(gray).family)
+        assertEquals(ColorFamily.BLUE, ColorNamer.name(blue).family)
+        val result = ColorDifference.compare(gray, blue)
+        assertEquals(Verdict.CLOSE, result.verdict)
+        assertTrue(result.explanation, result.explanation.startsWith("Both are close to gray. B leans a little toward blue"))
+    }
+
     @Test
     fun slightlyDifferentShadesAreClose() {
         val result = ColorDifference.compare(Rgb.parse("#1F3A5F"), Rgb.parse("#27456F"))
