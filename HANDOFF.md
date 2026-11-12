@@ -285,3 +285,41 @@ Sửa thêm theo yêu cầu (cùng tối 12/11):
 Ghi nhận, chưa sửa:
 - Ánh sáng hỗn hợp: hiệu chuẩn gần đèn vàng rồi đọc dưới đèn trần thì giấy ngả xanh. Đúng về vật lý, nhưng nên dặn người dùng hiệu chuẩn ngay tại chỗ sẽ đọc màu.
 - Chưa thử dưới ánh sáng ban ngày (hẹn làm ngày 13/11).
+
+### Đồng bộ giao diện (12/11/2026 tối, chưa commit)
+
+Chủ dự án chọn: **theo cài đặt sáng/tối của hệ thống, riêng màn camera luôn tối.**
+
+Hệ thống thiết kế trong `ui/Theme.kt`:
+- `HuenoColors` giờ là token theo vai trò (`Background`, `Surface`, `Line`, `Text`, `TextMuted`, `Action`, `OnAction`, `Link`), đọc từ bộ màu sáng hoặc tối của `HuenoTheme` gần nhất. `HuenoTheme()` mặc định theo hệ thống; `HuenoTheme(dark = true)` để ép tối.
+- Nền sáng đổi từ kem (#F6F4EF) sang gần trung tính (#F3F3F1), để nền không làm ấm màu mẫu bên cạnh.
+- `Link` là màu riêng cho chữ dạng liên kết: xanh đậm trên nền sáng, xanh nhạt trên nền tối, để đủ tương phản.
+- `HuenoBrand`: màu cố định cho splash và cho vòng tròn vẽ đè lên ảnh camera.
+- `HuenoType`: 7 cỡ chữ (32/26/20/16/14/13/12), thay cho 17 cỡ trước đây. `HuenoShapes`: 3 cỡ bo góc (8/16/24). `HuenoSize`: lề màn hình 20dp, nút chính cao 56dp, vùng chạm 48dp.
+
+Thành phần dùng chung trong `ui/Components.kt`: `HuenoPrimaryButton`, `HuenoSecondaryButton`, `OverlayHeader` (nút ← và tiêu đề cho các màn phủ), `ScreenTitle`, `TabTitle`, `relativeTime`.
+
+Thay đổi theo màn hình:
+- Ba tab có cùng thanh tiêu đề (cỡ Title, cao 64dp). Tab Photo khi chưa có ảnh đặt nội dung từ trên xuống thay vì giữa màn hình, và nút "Choose a photo" là nút chính màu xanh.
+- Màn chi tiết màu, Settings, Pro cùng dùng nút ← (Pro trước đây dùng ✕). Settings đặt tiêu đề trên thanh, như màn chi tiết màu; Pro giữ tiêu đề lớn vì là trang giới thiệu.
+- Mọi nút chính và nút phụ dùng hai kiểu chung. Thẻ "Use Pro for 6 hours" dùng viền mảnh như các thẻ khác, thay cho viền đen dày.
+- Nút đọc to ở màn chi tiết màu giống nút ở camera: nền bề mặt, viền mảnh.
+- History hiện thời gian bằng tiếng Anh ("59 min ago"). Trước đây dùng `DateUtils` nên hiện theo ngôn ngữ máy ("50 phút trước").
+
+Đã kiểm trên Flip4 ở cả chế độ sáng và tối (`adb shell cmd uimode night yes|no`): camera luôn tối; các màn còn lại đổi theo hệ thống; không crash. 50 unit test qua. Chưa kiểm: màn hướng dẫn và các hộp thoại ở chế độ tối, chữ cỡ lớn.
+
+Chỉnh thêm theo yêu cầu (cùng tối 12/11):
+- Logo app (`hueno_mark`, 28dp, chỉ để trang trí) đứng trước tiêu đề trên thanh của tab Camera và tab Photo (`TabTitle(showLogo = true)`).
+- **Chuyển tab không còn chớp nền.** `HuenoTheme(darkness: Float)` nội suy từng màu giữa bộ sáng và bộ tối. `HuenoApp` cho `darkness` chạy trong 280ms khi đổi giữa camera (luôn tối) và tab sáng, và nội dung tab mờ dần sang nhau (`Crossfade`). Đã quay màn hình trên Flip4: tối → xám → sáng trong khoảng 200ms. Hiệu ứng chỉ cập nhật khoảng 4 bước vì việc đóng camera chiếm luồng giao diện; muốn mượt hơn thì phải chuyển `ColorCamera.shutdown()` ra khỏi luồng chính.
+
+Lưu ý khi tự động hóa bằng `adb` trên Flip4: nút chụp nằm ở y ≈ 2140, còn thanh tab ở y ≈ 2420. Chạm theo tọa độ tính từ ảnh đã thu nhỏ từng bấm nhầm nút chụp và lưu màu thừa vào History (đã xóa những màu chắc chắn do lệnh tạo ra). Luôn chạm theo chữ hoặc theo `uiautomator dump`.
+
+### Thay bộ icon (12/11/2026 tối, chưa commit)
+
+Chủ dự án gửi file Figma "Free UI Icons - Open Source Vector Icon Set (svg)". Đó là **Streamline Core Line Free** của Webalys, giấy phép **CC BY 4.0**: dùng thương mại được, nhưng phải ghi công kèm đường dẫn tới streamlinehq.com. Nguồn SVG chính thức: https://github.com/webalys-hq/streamline-vectors (thư mục `core/line`).
+
+- `ui/HuenoIcons.kt` được tạo lại từ SVG gốc, giữ nguyên các đường vẽ, khung 14×14, nét dày 1, đầu nét tròn (khoảng 1,7dp ở cỡ 24dp; trước đây là 2dp).
+- Icon tương ứng: Camera `camera-1`, Photo `landscape-2`, History `circle-clock`, Speak `volume-level-high`, Copy `copy-paste`, Torch `flash-1`, Calibrate `target`, Pause `button-pause-2`, Play `button-play`, Close `delete-1`, Check `check`, NotEqual `not-equal-sign`, Trash `recycle-bin-2`, Settings `cog`, Alert `warning-triangle`, Back là `arrow-up-1` xoay sang trái.
+- Compare (hai vòng tròn) và Approx (≈) không có trong bộ miễn phí, nên được vẽ lại theo cùng phong cách.
+- Ghi công nằm trong Settings, dưới số phiên bản: "Icons: Streamline Core Line Free, CC BY 4.0 (streamlinehq.com)", bấm vào thì mở streamlinehq.com. **Không được bỏ dòng này** khi còn dùng bộ icon. Nên thêm cả vào trang chính sách hoặc giới thiệu khi có.
+- Đã kiểm trên Flip4: Camera, chi tiết màu, Settings.

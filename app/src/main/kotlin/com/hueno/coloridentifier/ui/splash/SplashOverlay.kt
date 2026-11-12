@@ -36,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
-import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoBrand
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
@@ -116,7 +116,7 @@ fun SplashOverlay(onReveal: () -> Unit, onDone: () -> Unit) {
                 scaleX = 1f + 0.06f * leaving
                 scaleY = 1f + 0.06f * leaving
             }
-            .background(HuenoColors.Ink)
+            .background(HuenoBrand.Ink)
             // Swallows touches so nothing underneath is pressed by accident, and stays out of
             // the way of screen readers: the intro is decoration.
             .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
@@ -133,14 +133,14 @@ fun SplashOverlay(onReveal: () -> Unit, onDone: () -> Unit) {
         ) {
             Text(
                 stringResource(R.string.app_name),
-                color = HuenoColors.OnInk,
+                color = HuenoBrand.OnInk,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(y = (14 * (1f - nameIn)).dp).alpha(nameIn),
             )
             Text(
                 stringResource(R.string.splash_tagline),
-                color = HuenoColors.OnInkMuted,
+                color = HuenoBrand.OnInkMuted,
                 fontSize = 15.sp,
                 modifier = Modifier.padding(top = 6.dp).alpha(taglineIn),
             )
@@ -215,7 +215,7 @@ private fun DrawScope.drawMark(t: Float) {
     val searching = lerp(hues[index], hues[index + 1], position - index)
     val settle = smooth(span(t, LOCK - 0.04f, LOCK + 0.06f))
     val showSearch = smooth(span(t, 0.02f, 0.10f))
-    val dotColor = lerp(lerp(HuenoColors.OnInk, searching, showSearch), HuenoColors.OnInk, settle)
+    val dotColor = lerp(lerp(HuenoBrand.OnInk, searching, showSearch), HuenoBrand.OnInk, settle)
     val pop = sin(PI.toFloat() * span(t, LOCK - 0.02f, LOCK + 0.14f))
     drawCircle(dotColor, 44f * scale * unit * (1f + 0.28f * pop), center)
 
@@ -224,7 +224,7 @@ private fun DrawScope.drawMark(t: Float) {
     if (pulse > 0f && pulse < 1f) {
         val outer = 158f * scale * unit
         drawCircle(
-            color = HuenoColors.OnInk.copy(alpha = 0.55f * (1f - pulse)),
+            color = HuenoBrand.OnInk.copy(alpha = 0.55f * (1f - pulse)),
             radius = outer * (1f + 0.75f * smooth(pulse)),
             center = center,
             style = Stroke(width = 6f * unit * (1f - 0.6f * pulse)),

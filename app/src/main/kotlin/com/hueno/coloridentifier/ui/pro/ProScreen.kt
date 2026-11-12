@@ -39,6 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.OverlayHeader
+import com.hueno.coloridentifier.ui.ScreenTitle
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.coloridentifier.ui.ProReason
 import com.hueno.monetization.MonetizationState
@@ -59,42 +64,22 @@ fun ProScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HuenoColors.Paper)
+            .background(HuenoColors.Background)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            val close = stringResource(R.string.close)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onClose)
-                    .semantics { contentDescription = close },
-                contentAlignment = Alignment.Center,
-            ) { Icon(HuenoIcons.Close, contentDescription = null, tint = HuenoColors.OnPaper) }
+        OverlayHeader(onBack = onClose) {
             TextButton(onClick = onRestore) {
-                Text(stringResource(R.string.pro_restore), color = HuenoColors.Action, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.pro_restore), color = HuenoColors.Link, fontWeight = FontWeight.SemiBold)
             }
         }
 
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 24.dp),
+            modifier = Modifier.padding(horizontal = HuenoSize.ScreenPadding).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.pro_title),
-                    color = HuenoColors.OnPaper,
-                    fontSize = 38.sp,
-                    lineHeight = 42.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics { heading() },
-                )
+                ScreenTitle(stringResource(R.string.pro_title))
                 val limit = when (reason) {
                     ProReason.COMPARE_LIMIT ->
                         stringResource(R.string.pro_reason_compare, ProRules.FREE_COMPARES_PER_DAY)
@@ -105,8 +90,8 @@ fun ProScreen(
                         stringResource(R.string.pro_reason_profile, ProRules.FREE_PROFILE_LIMIT)
                     ProReason.MENU -> null
                 }
-                limit?.let { Text(it, color = HuenoColors.OnPaper, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
-                Text(stringResource(R.string.pro_intro), color = HuenoColors.OnPaperMuted, fontSize = 16.sp, lineHeight = 22.sp)
+                limit?.let { Text(it, color = HuenoColors.Text, fontSize = HuenoType.Body, fontWeight = FontWeight.SemiBold) }
+                Text(stringResource(R.string.pro_intro), color = HuenoColors.TextMuted, fontSize = HuenoType.Body, lineHeight = HuenoType.BodyLine)
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -122,8 +107,8 @@ fun ProScreen(
             message?.let {
                 Text(
                     it,
-                    color = HuenoColors.OnPaper,
-                    fontSize = 15.sp,
+                    color = HuenoColors.Text,
+                    fontSize = HuenoType.Body,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
@@ -158,10 +143,10 @@ fun ProScreen(
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.pro_videos_note), color = HuenoColors.OnPaperMuted, fontSize = 13.sp)
+                Text(stringResource(R.string.pro_videos_note), color = HuenoColors.TextMuted, fontSize = HuenoType.Label)
                 if (state.privacyOptionsRequired) {
                     TextButton(onClick = onPrivacy) {
-                        Text(stringResource(R.string.pro_privacy), color = HuenoColors.Action, fontSize = 14.sp)
+                        Text(stringResource(R.string.pro_privacy), color = HuenoColors.Link, fontSize = HuenoType.BodySmall)
                     }
                 }
             }
@@ -172,8 +157,8 @@ fun ProScreen(
 @Composable
 private fun Benefit(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(HuenoIcons.Check, contentDescription = null, tint = HuenoColors.OnPaper, modifier = Modifier.size(22.dp))
-        Text(text, color = HuenoColors.OnPaper, fontSize = 16.sp)
+        Icon(HuenoIcons.Check, contentDescription = null, tint = HuenoColors.Text, modifier = Modifier.size(22.dp))
+        Text(text, color = HuenoColors.Text, fontSize = HuenoType.Body)
     }
 }
 
@@ -191,9 +176,9 @@ private fun StatusNote(state: MonetizationState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(HuenoColors.Card)
-            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp))
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Surface)
+            .border(1.dp, HuenoColors.Line, HuenoShapes.Medium)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -201,10 +186,10 @@ private fun StatusNote(state: MonetizationState) {
         Icon(
             if (state.isPro) HuenoIcons.Check else HuenoIcons.History,
             contentDescription = null,
-            tint = HuenoColors.OnPaper,
+            tint = HuenoColors.Text,
             modifier = Modifier.size(20.dp),
         )
-        Text(text, color = HuenoColors.OnPaper, fontSize = 14.sp, lineHeight = 20.sp)
+        Text(text, color = HuenoColors.Text, fontSize = HuenoType.BodySmall, lineHeight = HuenoType.BodyLine)
     }
 }
 
@@ -218,27 +203,27 @@ private fun OptionCard(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    val background = if (filled) HuenoColors.Action else HuenoColors.Card
-    val content = if (filled) HuenoColors.OnAction else HuenoColors.OnPaper
-    val secondary = if (filled) Color(0xFFE3EAFD) else HuenoColors.OnPaperMuted
+    val background = if (filled) HuenoColors.Action else HuenoColors.Surface
+    val content = if (filled) HuenoColors.OnAction else HuenoColors.Text
+    val secondary = if (filled) Color(0xFFE3EAFD) else HuenoColors.TextMuted
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 76.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (enabled) background else HuenoColors.PaperLine)
-            .then(if (filled) Modifier else Modifier.border(1.5.dp, HuenoColors.OnPaper, RoundedCornerShape(20.dp)))
+            .clip(HuenoShapes.Large)
+            .background(if (enabled) background else HuenoColors.Line)
+            .then(if (filled) Modifier else Modifier.border(1.dp, HuenoColors.Line, HuenoShapes.Large))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        val shown = if (enabled) content else HuenoColors.OnPaper
+        val shown = if (enabled) content else HuenoColors.Text
         icon?.let { Icon(it, contentDescription = null, tint = shown, modifier = Modifier.size(28.dp)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, color = shown, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = if (enabled) secondary else HuenoColors.OnPaper, fontSize = 14.sp)
+            Text(title, color = shown, fontSize = HuenoType.Title, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, color = if (enabled) secondary else HuenoColors.Text, fontSize = HuenoType.BodySmall)
         }
-        trailing?.let { Text(it, color = shown, fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+        trailing?.let { Text(it, color = shown, fontSize = HuenoType.Title, fontWeight = FontWeight.Bold) }
     }
 }

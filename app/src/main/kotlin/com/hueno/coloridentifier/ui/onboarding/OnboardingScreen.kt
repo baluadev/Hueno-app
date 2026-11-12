@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoPrimaryButton
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.ScreenTitle
+import com.hueno.coloridentifier.ui.HuenoType
 
 /** First-run guide: three things to know, then straight to the camera. Shown once. */
 @Composable
@@ -40,10 +44,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HuenoColors.Paper)
+            .background(HuenoColors.Background)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 28.dp, vertical = 32.dp),
+            .padding(horizontal = HuenoSize.ScreenPadding, vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(28.dp),
     ) {
         Image(
@@ -52,15 +56,8 @@ fun OnboardingScreen(onDone: () -> Unit) {
             modifier = Modifier.size(72.dp),
         )
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                stringResource(R.string.onboarding_title),
-                color = HuenoColors.OnPaper,
-                fontSize = 34.sp,
-                lineHeight = 38.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(stringResource(R.string.onboarding_subtitle), color = HuenoColors.OnPaperMuted, fontSize = 16.sp)
+            ScreenTitle(stringResource(R.string.onboarding_title))
+            Text(stringResource(R.string.onboarding_subtitle), color = HuenoColors.TextMuted, fontSize = HuenoType.Body)
         }
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Step(1, stringResource(R.string.onboarding_step1_title), stringResource(R.string.onboarding_step1_body))
@@ -69,18 +66,11 @@ fun OnboardingScreen(onDone: () -> Unit) {
         }
         Spacer(Modifier.height(4.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = onDone,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HuenoColors.Action,
-                    contentColor = HuenoColors.OnAction,
-                ),
-            ) { Text(stringResource(R.string.onboarding_start), fontSize = 17.sp, fontWeight = FontWeight.SemiBold) }
+            HuenoPrimaryButton(stringResource(R.string.onboarding_start), onDone, Modifier.fillMaxWidth())
             Text(
                 stringResource(R.string.onboarding_note),
-                color = HuenoColors.OnPaperMuted,
-                fontSize = 13.sp,
+                color = HuenoColors.TextMuted,
+                fontSize = HuenoType.Label,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -92,14 +82,14 @@ fun OnboardingScreen(onDone: () -> Unit) {
 private fun Step(number: Int, title: String, body: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
         Box(
-            modifier = Modifier.size(40.dp).clip(CircleShape).background(HuenoColors.OnPaper),
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(HuenoColors.Text),
             contentAlignment = Alignment.Center,
         ) {
-            Text(number.toString(), color = HuenoColors.Paper, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(number.toString(), color = HuenoColors.Background, fontSize = HuenoType.Title, fontWeight = FontWeight.Bold)
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, color = HuenoColors.OnPaper, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text(body, color = HuenoColors.OnPaperMuted, fontSize = 15.sp, lineHeight = 21.sp)
+            Text(title, color = HuenoColors.Text, fontSize = HuenoType.Title, fontWeight = FontWeight.SemiBold)
+            Text(body, color = HuenoColors.TextMuted, fontSize = HuenoType.Body, lineHeight = HuenoType.BodyLine)
         }
     }
 }

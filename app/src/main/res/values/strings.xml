@@ -187,6 +187,7 @@
     <string name="settings_feedback_body">Tell us what works and what does not</string>
     <string name="settings_feedback_subject">Hueno feedback</string>
     <string name="settings_version">Version %1$s</string>
+    <string name="settings_icon_credit">Icons: Streamline Core Line Free, CC BY 4.0 (streamlinehq.com)</string>
     <string name="thumbnail_description">Picture of the object</string>
 
     <!-- History -->

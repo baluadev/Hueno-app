@@ -1,6 +1,5 @@
 package com.hueno.coloridentifier.ui.history
 
-import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +40,12 @@ import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.AdBanner
 import com.hueno.coloridentifier.ui.Capture
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoSecondaryButton
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.TabTitle
+import com.hueno.coloridentifier.ui.relativeTime
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.ThumbnailImage
 
 /**
@@ -63,34 +68,20 @@ fun HistoryScreen(
 ) {
     Column(Modifier.fillMaxSize()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = HuenoSize.ScreenPadding, end = 12.dp, top = 8.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.history_title),
-                    color = HuenoColors.OnPaper,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics { heading() },
-                )
+                TabTitle(stringResource(R.string.history_title))
                 Text(
                     pluralStringResource(R.plurals.history_count, captures.size, captures.size),
-                    color = HuenoColors.OnPaperMuted,
-                    fontSize = 13.sp,
+                    color = HuenoColors.TextMuted,
+                    fontSize = HuenoType.Label,
                 )
             }
-            OutlinedButton(onClick = onExport, enabled = captures.isNotEmpty(), modifier = Modifier.height(48.dp)) {
-                Text(stringResource(R.string.history_export), color = HuenoColors.OnPaper, fontWeight = FontWeight.SemiBold)
-            }
-            OutlinedButton(onClick = onOpenPro, modifier = Modifier.height(48.dp)) {
-                Text(
-                    stringResource(if (isPro) R.string.pro_open_active else R.string.pro_open),
-                    color = HuenoColors.OnPaper,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+            HuenoSecondaryButton(stringResource(R.string.history_export), onExport, enabled = captures.isNotEmpty())
+            HuenoSecondaryButton(stringResource(if (isPro) R.string.pro_open_active else R.string.pro_open), onOpenPro)
         }
 
         if (collections.isNotEmpty()) {
@@ -115,11 +106,11 @@ fun HistoryScreen(
             ) {
                 Text(
                     stringResource(R.string.history_empty_title),
-                    color = HuenoColors.OnPaper,
-                    fontSize = 22.sp,
+                    color = HuenoColors.Text,
+                    fontSize = HuenoType.Title,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(stringResource(R.string.history_empty_body), color = HuenoColors.OnPaperMuted, fontSize = 16.sp)
+                Text(stringResource(R.string.history_empty_body), color = HuenoColors.TextMuted, fontSize = HuenoType.Body)
             }
         } else {
             LazyColumn(
@@ -140,10 +131,10 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .heightIn(min = 44.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(if (selected) HuenoColors.OnPaper else Color.Transparent)
+            .clip(HuenoShapes.Large)
+            .background(if (selected) HuenoColors.Text else Color.Transparent)
             .then(
-                if (selected) Modifier else Modifier.border(1.dp, HuenoColors.OnPaperMuted, RoundedCornerShape(22.dp)),
+                if (selected) Modifier else Modifier.border(1.dp, HuenoColors.TextMuted, HuenoShapes.Large),
             )
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics { this.selected = selected }
@@ -152,8 +143,8 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
     ) {
         Text(
             label,
-            color = if (selected) HuenoColors.Paper else HuenoColors.OnPaper,
-            fontSize = 14.sp,
+            color = if (selected) HuenoColors.Background else HuenoColors.Text,
+            fontSize = HuenoType.BodySmall,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
         )
@@ -167,9 +158,9 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(HuenoColors.Card)
-            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(16.dp))
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Surface)
+            .border(1.dp, HuenoColors.Line, HuenoShapes.Medium)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -181,32 +172,32 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
                 Box(
                     Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(HuenoShapes.Medium)
                         .background(Color(rgb.r, rgb.g, rgb.b))
-                        .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(12.dp)),
+                        .border(1.dp, HuenoColors.Line, HuenoShapes.Medium),
                 )
             } else {
                 // The object on the left, with its color as a chip on the corner.
                 ThumbnailImage(
                     file = file,
                     contentDescription = null,
-                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.size(44.dp).clip(HuenoShapes.Medium),
                 )
                 Box(
                     Modifier
                         .align(Alignment.BottomEnd)
                         .size(22.dp)
-                        .clip(RoundedCornerShape(7.dp))
+                        .clip(HuenoShapes.Small)
                         .background(Color(rgb.r, rgb.g, rgb.b))
-                        .border(2.dp, HuenoColors.Card, RoundedCornerShape(7.dp)),
+                        .border(2.dp, HuenoColors.Surface, HuenoShapes.Small),
                 )
             }
         }
         Column(Modifier.weight(1f)) {
             Text(
                 capture.title,
-                color = HuenoColors.OnPaper,
-                fontSize = 17.sp,
+                color = HuenoColors.Text,
+                fontSize = HuenoType.Body,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -215,21 +206,16 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
             val second = if (capture.label != null) capture.name.plain else capture.name.detail
             Text(
                 stringResource(R.string.detail_and_hex, second, rgb.hex),
-                color = HuenoColors.OnPaperMuted,
-                fontSize = 13.sp,
+                color = HuenoColors.TextMuted,
+                fontSize = HuenoType.Label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         Text(
-            DateUtils.getRelativeTimeSpanString(
-                capture.timeMillis,
-                System.currentTimeMillis(),
-                DateUtils.MINUTE_IN_MILLIS,
-                DateUtils.FORMAT_ABBREV_RELATIVE,
-            ).toString(),
-            color = HuenoColors.OnPaperMuted,
-            fontSize = 12.sp,
+            relativeTime(capture.timeMillis, System.currentTimeMillis()),
+            color = HuenoColors.TextMuted,
+            fontSize = HuenoType.Caption,
         )
     }
 }

@@ -3,6 +3,8 @@ package com.hueno.coloridentifier.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.OverlayHeader
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.monetization.MonetizationState
 
@@ -57,36 +63,16 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HuenoColors.Paper)
+            .background(HuenoColors.Background)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val back = stringResource(R.string.back)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onClose)
-                    .semantics { contentDescription = back },
-                contentAlignment = Alignment.Center,
-            ) { Icon(HuenoIcons.Back, contentDescription = null, tint = HuenoColors.OnPaper) }
-        }
+        OverlayHeader(onBack = onClose, title = stringResource(R.string.settings_title))
 
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp),
+            modifier = Modifier.padding(horizontal = HuenoSize.ScreenPadding).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                stringResource(R.string.settings_title),
-                color = HuenoColors.OnPaper,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.semantics { heading() },
-            )
 
             Group {
                 val label = stringResource(R.string.settings_hex_hash)
@@ -100,13 +86,13 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(label, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                        Text(label, color = HuenoColors.Text, fontSize = HuenoType.Body, fontWeight = FontWeight.Medium)
                         Text(
                             stringResource(
                                 if (hexWithHash) R.string.settings_hex_hash_on else R.string.settings_hex_hash_off,
                             ),
-                            color = HuenoColors.OnPaperMuted,
-                            fontSize = 14.sp,
+                            color = HuenoColors.TextMuted,
+                            fontSize = HuenoType.BodySmall,
                         )
                     }
                     Switch(checked = hexWithHash, onCheckedChange = null)
@@ -124,11 +110,11 @@ fun SettingsScreen(
                 }
                 LinkRow(stringResource(R.string.pro_title), proStatus, onOpenPro)
                 if (money.privacyOptionsRequired) {
-                    HorizontalDivider(color = HuenoColors.PaperLine)
+                    HorizontalDivider(color = HuenoColors.Line)
                     LinkRow(stringResource(R.string.pro_privacy), stringResource(R.string.settings_privacy_body), onPrivacy)
                 }
                 if (onFeedback != null) {
-                    HorizontalDivider(color = HuenoColors.PaperLine)
+                    HorizontalDivider(color = HuenoColors.Line)
                     LinkRow(
                         stringResource(R.string.settings_feedback),
                         stringResource(R.string.settings_feedback_body),
@@ -139,8 +125,19 @@ fun SettingsScreen(
 
             Text(
                 stringResource(R.string.settings_version, versionName),
-                color = HuenoColors.OnPaperMuted,
-                fontSize = 13.sp,
+                color = HuenoColors.TextMuted,
+                fontSize = HuenoType.Label,
+            )
+            // Required by the icons' CC BY 4.0 license: credit plus a link to Streamline.
+            val uriHandler = LocalUriHandler.current
+            Text(
+                stringResource(R.string.settings_icon_credit),
+                color = HuenoColors.Link,
+                fontSize = HuenoType.Label,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clickable(role = Role.Button) { runCatching { uriHandler.openUri(ICON_CREDIT_URL) } }
+                    .wrapContentHeight(),
             )
         }
     }
@@ -151,9 +148,9 @@ private fun Group(content: @Composable () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(HuenoColors.Card)
-            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp)),
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Surface)
+            .border(1.dp, HuenoColors.Line, HuenoShapes.Medium),
     ) { content() }
 }
 
@@ -168,8 +165,10 @@ private fun LinkRow(title: String, body: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium)
-            Text(body, color = HuenoColors.OnPaperMuted, fontSize = 14.sp)
+            Text(title, color = HuenoColors.Text, fontSize = HuenoType.Body, fontWeight = FontWeight.Medium)
+            Text(body, color = HuenoColors.TextMuted, fontSize = HuenoType.BodySmall)
         }
     }
 }
+
+private const val ICON_CREDIT_URL = "https://streamlinehq.com"

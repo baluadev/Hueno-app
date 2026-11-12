@@ -18,6 +18,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -47,22 +51,24 @@ import com.hueno.coloridentifier.ui.settings.SettingsScreen
 
 @Composable
 fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
+    // Screens follow the system's light or dark setting. The camera is always dark, so the preview
+    // is not framed by bright glare and the eye judges its colors against a neutral dark surround.
+    val systemDark = isSystemInDarkTheme()
     if (viewModel.showOnboarding) {
-        SystemBarIcons(darkScreen = false)
-        HuenoTheme(dark = false) { OnboardingScreen(onDone = viewModel::finishOnboarding) }
+        SystemBarIcons(darkScreen = systemDark)
+        HuenoTheme { OnboardingScreen(onDone = viewModel::finishOnboarding) }
         return
     }
 
     val tab = viewModel.tab
-    val dark = tab != Tab.HISTORY
+    val dark = tab == Tab.CAMERA || systemDark
     val speaker = rememberSpeaker()
     val money by viewModel.money.collectAsStateWithLifecycle()
     val activity = LocalContext.current as? Activity
     val bannerUnitId = if (money.showBanners) viewModel.bannerUnitId else null
-    // The detail and Pro screens are light and cover the whole window while open.
-    SystemBarIcons(
-        darkScreen = dark && viewModel.openCapture == null && viewModel.proScreen == null && !viewModel.showSettings,
-    )
+    // The detail, settings and Pro screens follow the system setting and cover the whole window.
+    val overlayOpen = viewModel.openCapture != null || viewModel.proScreen != null || viewModel.showSettings
+    SystemBarIcons(darkScreen = if (overlayOpen) systemDark else dark)
 
     LaunchedEffect(Unit) { activity?.let(viewModel::onMainScreenShown) }
 
@@ -91,11 +97,22 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         }
     }
 
-    HuenoTheme(dark = dark) {
+    // Moving between the dark camera and a light tab fades the colors over instead of flashing.
+    val darkness by animateFloatAsState(
+        targetValue = if (dark) 1f else 0f,
+        animationSpec = tween(durationMillis = TAB_FADE_MILLIS),
+        label = "darkness",
+    )
+    HuenoTheme(darkness = darkness) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-                Box(Modifier.weight(1f)) {
-                    when (tab) {
+                Crossfade(
+                    targetState = tab,
+                    animationSpec = tween(durationMillis = TAB_FADE_MILLIS),
+                    modifier = Modifier.weight(1f),
+                    label = "tab",
+                ) { shown ->
+                    when (shown) {
                         Tab.CAMERA -> CameraScreen(
                             speaker = speaker,
                             compareReference = viewModel.compareReference,
@@ -132,7 +149,7 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     // its calibration stay alive while a captured color is being read.
     viewModel.openCapture?.let { capture ->
         BackHandler { viewModel.closeCapture() }
-        HuenoTheme(dark = false) {
+        HuenoTheme {
             ResultScreen(
                 capture = capture,
                 collections = collections,
@@ -151,7 +168,7 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
     if (viewModel.showSettings) {
         BackHandler { viewModel.closeSettings() }
         val feedbackSubject = stringResource(R.string.settings_feedback_subject)
-        HuenoTheme(dark = false) {
+        HuenoTheme {
             SettingsScreen(
                 money = money,
                 hexWithHash = viewModel.hexWithHash,
@@ -180,7 +197,7 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
         val granted = stringResource(R.string.pro_watch_granted)
         val noVideo = stringResource(R.string.pro_watch_failed)
         val restoring = stringResource(R.string.pro_restore_checking)
-        HuenoTheme(dark = false) {
+        HuenoTheme {
             ProScreen(
                 reason = reason,
                 state = money,
@@ -208,6 +225,7 @@ fun HuenoApp(viewModel: HuenoViewModel = viewModel()) {
 }
 
 private const val EXPORT_FILE_NAME = "hueno-colors.csv"
+private const val TAB_FADE_MILLIS = 280
 
 private fun BillingEvent.messageRes(): Int = when (this) {
     BillingEvent.PURCHASED -> R.string.pro_event_purchased

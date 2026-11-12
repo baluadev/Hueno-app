@@ -90,7 +90,14 @@ import com.hueno.camera.ColorCamera
 import com.hueno.camera.SampleSize
 import com.hueno.coloridentifier.BuildConfig
 import com.hueno.coloridentifier.R
+import com.hueno.coloridentifier.ui.HuenoBrand
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoPrimaryButton
+import com.hueno.coloridentifier.ui.HuenoSecondaryButton
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.TabTitle
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.coloridentifier.ui.Speaker
 import com.hueno.coloridentifier.ui.Thumbnails
@@ -151,21 +158,24 @@ fun CameraScreen(
         LiveCamera(speaker, compareReference, onCompareReference, onCapture, canSaveProfile, onProfileLimit, onOpenSettings)
     } else {
         Column(
-            modifier = Modifier.fillMaxSize().padding(28.dp),
+            modifier = Modifier.fillMaxSize().padding(HuenoSize.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
         ) {
             Text(
                 stringResource(R.string.permission_title),
-                style = MaterialTheme.typography.headlineLarge,
+                fontSize = HuenoType.Display,
+                lineHeight = HuenoType.DisplayLine,
                 fontWeight = FontWeight.Bold,
-                color = HuenoColors.OnInk,
+                color = HuenoColors.Text,
             )
             Text(
                 stringResource(if (blocked) R.string.permission_blocked_body else R.string.permission_body),
-                style = MaterialTheme.typography.bodyLarge,
-                color = HuenoColors.OnInkMuted,
+                fontSize = HuenoType.Body,
+                lineHeight = HuenoType.BodyLine,
+                color = HuenoColors.TextMuted,
             )
-            Button(
+            HuenoPrimaryButton(
+                text = stringResource(if (blocked) R.string.permission_open_settings else R.string.permission_allow),
                 onClick = {
                     if (blocked) {
                         val intent = Intent(
@@ -177,17 +187,8 @@ fun CameraScreen(
                         launcher.launch(Manifest.permission.CAMERA)
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HuenoColors.Action,
-                    contentColor = HuenoColors.OnAction,
-                ),
-            ) {
-                Text(
-                    stringResource(if (blocked) R.string.permission_open_settings else R.string.permission_allow),
-                    fontSize = 17.sp,
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -290,8 +291,8 @@ private fun LiveCamera(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 12.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(HuenoColors.InkRaised),
+                .clip(HuenoShapes.Large)
+                .background(HuenoColors.Surface),
         ) {
             // The picture and its touch handling are one layer; the chips above are siblings, so
             // pressing them never moves the ring.
@@ -330,7 +331,7 @@ private fun LiveCamera(
                     } else {
                         Offset(this.size.width / 2, this.size.height / 2)
                     }
-                    drawCircle(HuenoColors.Ink, radius + 4f, center, style = Stroke(width = 5f))
+                    drawCircle(HuenoBrand.Ink, radius + 4f, center, style = Stroke(width = 5f))
                     drawCircle(Color.White, radius, center, style = Stroke(width = 5f))
                     drawCircle(Color.White, 3f, center)
                 }
@@ -387,8 +388,8 @@ private fun LiveCamera(
             state.issue?.let {
                 Text(
                     stringResource(it.messageRes()),
-                    color = HuenoColors.OnInk,
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = HuenoColors.Text,
+                    fontSize = HuenoType.BodySmall,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
@@ -493,16 +494,10 @@ private fun TopBar(
     onSettings: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = HuenoSize.ScreenPadding, end = 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            stringResource(R.string.app_name),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = HuenoColors.OnInk,
-            modifier = Modifier.weight(1f),
-        )
+        TabTitle(stringResource(R.string.app_name), Modifier.weight(1f), showLogo = true)
         RoundIconButton(HuenoIcons.Calibrate, stringResource(R.string.camera_calibrate), calibrated, onCalibrate)
         Spacer(Modifier.width(6.dp))
         RoundIconButton(HuenoIcons.Torch, stringResource(R.string.camera_torch), torch, onTorch)
@@ -518,7 +513,7 @@ private fun RoundIconButton(icon: ImageVector, description: String, active: Bool
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(if (active) HuenoColors.OnInk else HuenoColors.InkRaised)
+            .background(if (active) HuenoColors.Text else HuenoColors.Surface)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics {
                 contentDescription = description
@@ -526,7 +521,7 @@ private fun RoundIconButton(icon: ImageVector, description: String, active: Bool
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = if (active) HuenoColors.Ink else HuenoColors.OnInk)
+        Icon(icon, contentDescription = null, tint = if (active) HuenoColors.Background else HuenoColors.Text)
     }
 }
 
@@ -541,8 +536,8 @@ private fun ConfidenceChip(reading: ColorReading?, frozen: Boolean, modifier: Mo
     }
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(HuenoColors.Ink)
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Background)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -551,10 +546,10 @@ private fun ConfidenceChip(reading: ColorReading?, frozen: Boolean, modifier: Mo
         Icon(
             if (level == ConfidenceLevel.GOOD) HuenoIcons.Check else HuenoIcons.Alert,
             contentDescription = null,
-            tint = HuenoColors.OnInk,
+            tint = HuenoColors.Text,
             modifier = Modifier.size(16.dp),
         )
-        Text(text, color = HuenoColors.OnInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = HuenoColors.Text, fontSize = HuenoType.Label, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -566,7 +561,7 @@ private fun SizeSelector(selected: SampleSize, onSelect: (SampleSize) -> Unit, m
         Triple(SampleSize.LARGE, R.string.sample_large_short, R.string.sample_large),
     )
     Row(
-        modifier = modifier.clip(RoundedCornerShape(24.dp)).background(HuenoColors.Ink).padding(4.dp),
+        modifier = modifier.clip(HuenoShapes.Large).background(HuenoColors.Background).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         options.forEach { (option, short, long) ->
@@ -575,8 +570,8 @@ private fun SizeSelector(selected: SampleSize, onSelect: (SampleSize) -> Unit, m
             Box(
                 modifier = Modifier
                     .size(width = 48.dp, height = 40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (isSelected) HuenoColors.OnInk else Color.Transparent)
+                    .clip(HuenoShapes.Large)
+                    .background(if (isSelected) HuenoColors.Text else Color.Transparent)
                     .clickable(role = Role.RadioButton) { onSelect(option) }
                     .semantics {
                         contentDescription = description
@@ -586,8 +581,8 @@ private fun SizeSelector(selected: SampleSize, onSelect: (SampleSize) -> Unit, m
             ) {
                 Text(
                     stringResource(short),
-                    color = if (isSelected) HuenoColors.Ink else HuenoColors.OnInkMuted,
-                    fontSize = 14.sp,
+                    color = if (isSelected) HuenoColors.Background else HuenoColors.TextMuted,
+                    fontSize = HuenoType.BodySmall,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -605,30 +600,30 @@ private fun ReadingRow(reading: ColorReading?, frozen: Boolean, onSpeak: () -> U
         Box(
             Modifier
                 .size(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(reading?.rgb?.let { Color(it.r, it.g, it.b) } ?: HuenoColors.InkRaised)
-                .border(2.dp, HuenoColors.OnInk, RoundedCornerShape(16.dp)),
+                .clip(HuenoShapes.Medium)
+                .background(reading?.rgb?.let { Color(it.r, it.g, it.b) } ?: HuenoColors.Surface)
+                .border(2.dp, HuenoColors.Text, HuenoShapes.Medium),
         )
         Column(Modifier.weight(1f)) {
             Text(
                 reading?.name?.plain ?: stringResource(R.string.camera_starting),
-                color = HuenoColors.OnInk,
-                fontSize = if (reading == null) 22.sp else 32.sp,
+                color = HuenoColors.Text,
+                fontSize = if (reading == null) HuenoType.Title else HuenoType.Display,
                 fontWeight = FontWeight.Bold,
-                lineHeight = 36.sp,
+                lineHeight = HuenoType.DisplayLine,
             )
             if (reading != null) {
                 Text(
                     stringResource(R.string.detail_and_hex, reading.name.detail, reading.rgb.hex),
-                    color = HuenoColors.OnInkMuted,
-                    fontSize = 15.sp,
+                    color = HuenoColors.TextMuted,
+                    fontSize = HuenoType.Body,
                 )
                 val tip = if (frozen) {
                     stringResource(R.string.camera_frozen_hint)
                 } else {
                     reading.confidence.issue?.let { stringResource(it.tipRes()) }
                 }
-                tip?.let { Text(it, color = HuenoColors.OnInk, fontSize = 13.sp) }
+                tip?.let { Text(it, color = HuenoColors.Text, fontSize = HuenoType.Label) }
             }
         }
         if (reading != null) {
@@ -642,13 +637,13 @@ private fun LabeledAction(icon: ImageVector, label: String, onClick: () -> Unit)
     Column(
         modifier = Modifier
             .size(width = 72.dp, height = 60.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(HuenoShapes.Medium)
             .clickable(role = Role.Button, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = HuenoColors.OnInk)
-        Text(label, color = HuenoColors.OnInk, fontSize = 12.sp)
+        Icon(icon, contentDescription = null, tint = HuenoColors.Text)
+        Text(label, color = HuenoColors.Text, fontSize = HuenoType.Caption)
     }
 }
 
@@ -659,7 +654,7 @@ private fun CaptureButton(enabled: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .size(84.dp)
             .clip(CircleShape)
-            .border(4.dp, HuenoColors.OnInk, CircleShape)
+            .border(4.dp, HuenoColors.Text, CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description }
             .padding(10.dp),
@@ -668,7 +663,7 @@ private fun CaptureButton(enabled: Boolean, onClick: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .clip(CircleShape)
-                .background(if (enabled) HuenoColors.OnInk else HuenoColors.OnInkMuted),
+                .background(if (enabled) HuenoColors.Text else HuenoColors.TextMuted),
         )
     }
 }
@@ -699,8 +694,8 @@ private fun CalibrationPanel(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(if (calibrated) R.string.calibrate_done_title else R.string.calibrate_title),
-                color = HuenoColors.OnInk,
-                fontSize = 26.sp,
+                color = HuenoColors.Text,
+                fontSize = HuenoType.Headline,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
             )
@@ -708,34 +703,26 @@ private fun CalibrationPanel(
         }
         Text(
             stringResource(if (calibrated) R.string.calibrate_done_body else R.string.calibrate_body),
-            color = HuenoColors.OnInkMuted,
-            fontSize = 15.sp,
+            color = HuenoColors.TextMuted,
+            fontSize = HuenoType.Body,
         )
-        issue?.let { Text(stringResource(it.messageRes()), color = HuenoColors.OnInk, fontSize = 14.sp) }
+        issue?.let { Text(stringResource(it.messageRes()), color = HuenoColors.Text, fontSize = HuenoType.BodySmall) }
 
-        Button(
+        HuenoPrimaryButton(
+            text = stringResource(if (calibrated) R.string.calibrate_again else R.string.calibrate_now),
             onClick = onCalibrate,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HuenoColors.Action, contentColor = HuenoColors.OnAction),
-        ) {
-            Text(
-                stringResource(if (calibrated) R.string.calibrate_again else R.string.calibrate_now),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         if (supportsProfiles) {
             if (calibrated) {
-                OutlinedButton(onClick = onSave, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                    Text(stringResource(R.string.profile_save), color = HuenoColors.OnInk)
-                }
+                HuenoSecondaryButton(stringResource(R.string.profile_save), onSave, Modifier.fillMaxWidth())
             }
             if (profiles.isNotEmpty()) {
                 Text(
                     stringResource(R.string.profile_saved_heading),
-                    color = HuenoColors.OnInkMuted,
-                    fontSize = 13.sp,
+                    color = HuenoColors.TextMuted,
+                    fontSize = HuenoType.Label,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 6.dp),
                 )
@@ -743,14 +730,14 @@ private fun CalibrationPanel(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(HuenoColors.InkRaised)
+                            .clip(HuenoShapes.Medium)
+                            .background(HuenoColors.Surface)
                             .padding(start = 14.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(profile.name, color = HuenoColors.OnInk, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                        Text(profile.name, color = HuenoColors.Text, fontSize = HuenoType.Body, modifier = Modifier.weight(1f))
                         TextButton(onClick = { onUse(profile) }) {
-                            Text(stringResource(R.string.profile_use), color = HuenoColors.OnInk, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.profile_use), color = HuenoColors.Text, fontWeight = FontWeight.SemiBold)
                         }
                         val delete = stringResource(R.string.profile_delete, profile.name)
                         Box(
@@ -760,19 +747,17 @@ private fun CalibrationPanel(
                                 .clickable(role = Role.Button) { onDelete(profile) }
                                 .semantics { contentDescription = delete },
                             contentAlignment = Alignment.Center,
-                        ) { Icon(HuenoIcons.Trash, contentDescription = null, tint = HuenoColors.OnInkMuted) }
+                        ) { Icon(HuenoIcons.Trash, contentDescription = null, tint = HuenoColors.TextMuted) }
                     }
                 }
-                Text(stringResource(R.string.profile_note), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
+                Text(stringResource(R.string.profile_note), color = HuenoColors.TextMuted, fontSize = HuenoType.Label)
             }
         } else {
-            Text(stringResource(R.string.profile_unsupported), color = HuenoColors.OnInkMuted, fontSize = 13.sp)
+            Text(stringResource(R.string.profile_unsupported), color = HuenoColors.TextMuted, fontSize = HuenoType.Label)
         }
 
         if (calibrated) {
-            OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.calibrate_clear), color = HuenoColors.OnInk)
-            }
+            HuenoSecondaryButton(stringResource(R.string.calibrate_clear), onClear, Modifier.fillMaxWidth())
         }
     }
 }
@@ -829,11 +814,11 @@ private fun ComparePanel(reference: Rgb, current: Rgb, onSpeak: (String) -> Unit
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon, contentDescription = null, tint = HuenoColors.OnInk, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = null, tint = HuenoColors.Text, modifier = Modifier.size(28.dp))
             Text(
                 verdict,
-                color = HuenoColors.OnInk,
-                fontSize = 28.sp,
+                color = HuenoColors.Text,
+                fontSize = HuenoType.Headline,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
             )
@@ -846,9 +831,9 @@ private fun ComparePanel(reference: Rgb, current: Rgb, onSpeak: (String) -> Unit
             CompareSwatch(stringResource(R.string.compare_b), current, stringResource(R.string.compare_swatch_b, nameB))
             Text(
                 result.explanation,
-                color = HuenoColors.OnInk,
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
+                color = HuenoColors.Text,
+                fontSize = HuenoType.BodySmall,
+                lineHeight = HuenoType.BodySmallLine,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -860,21 +845,21 @@ private fun CompareSwatch(letter: String, rgb: Rgb, description: String) {
     Box(
         modifier = Modifier
             .size(52.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(HuenoShapes.Medium)
             .background(Color(rgb.r, rgb.g, rgb.b))
-            .border(2.dp, HuenoColors.OnInk, RoundedCornerShape(14.dp))
+            .border(2.dp, HuenoColors.Text, HuenoShapes.Medium)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.TopStart,
     ) {
         Text(
             letter,
-            color = HuenoColors.Ink,
-            fontSize = 12.sp,
+            color = HuenoColors.Background,
+            fontSize = HuenoType.Caption,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .padding(4.dp)
                 .clip(CircleShape)
-                .background(HuenoColors.OnInk)
+                .background(HuenoColors.Text)
                 .padding(horizontal = 6.dp),
         )
     }
@@ -893,9 +878,9 @@ private fun DebugLine(state: CameraColorState) {
             if (state.locked) "yes" else "no",
             if (state.supportsProfiles) "yes" else "no",
         ),
-        color = HuenoColors.OnInkMuted,
+        color = HuenoColors.TextMuted,
         fontFamily = FontFamily.Monospace,
-        fontSize = 11.sp,
+        fontSize = HuenoType.Caption,
         modifier = Modifier.padding(horizontal = 20.dp),
     )
 }

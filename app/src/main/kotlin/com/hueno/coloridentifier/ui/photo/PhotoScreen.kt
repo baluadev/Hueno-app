@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -66,7 +67,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hueno.coloridentifier.R
+import com.hueno.coloridentifier.ui.HuenoBrand
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoIcons
+import com.hueno.coloridentifier.ui.HuenoPrimaryButton
+import com.hueno.coloridentifier.ui.HuenoSecondaryButton
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.TabTitle
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.Thumbnails
 import com.hueno.core.color.ColorNamer
 import com.hueno.core.color.Rgb
@@ -117,27 +126,33 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
 
     val photo = bitmap
     if (photo == null) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        ) {
-            Text(
-                stringResource(R.string.photo_empty_title),
-                color = HuenoColors.OnInk,
-                fontSize = 28.sp,
-                lineHeight = 32.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(stringResource(R.string.photo_empty_body), color = HuenoColors.OnInkMuted, fontSize = 16.sp)
-            if (failed) Text(stringResource(R.string.photo_error), color = HuenoColors.OnInk, fontSize = 15.sp)
-            Button(
-                onClick = pick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HuenoColors.OnInk,
-                    contentColor = HuenoColors.Ink,
-                ),
-            ) { Text(stringResource(R.string.photo_choose), fontSize = 17.sp, fontWeight = FontWeight.SemiBold) }
+        // Same bar as the loaded state and the other tabs, with the content starting under it.
+        Column(Modifier.fillMaxSize()) {
+            PhotoBar()
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = HuenoSize.ScreenPadding, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    stringResource(R.string.photo_empty_title),
+                    color = HuenoColors.Text,
+                    fontSize = HuenoType.Headline,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.photo_empty_body),
+                    color = HuenoColors.TextMuted,
+                    fontSize = HuenoType.Body,
+                    lineHeight = HuenoType.BodyLine,
+                )
+                if (failed) Text(stringResource(R.string.photo_error), color = HuenoColors.Text, fontSize = HuenoType.Body)
+                HuenoPrimaryButton(
+                    text = stringResource(R.string.photo_choose),
+                    onClick = pick,
+                    icon = HuenoIcons.Photo,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+            }
         }
         return
     }
@@ -148,20 +163,8 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
     val name = ColorNamer.name(rgb)
 
     Column(Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(R.string.photo_title),
-                color = HuenoColors.OnInk,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedButton(onClick = pick, modifier = Modifier.height(48.dp)) {
-                Text(stringResource(R.string.photo_choose_another), color = HuenoColors.OnInk)
-            }
+        PhotoBar {
+            HuenoSecondaryButton(stringResource(R.string.photo_choose_another), pick)
         }
 
         var box by remember { mutableStateOf(IntSize.Zero) }
@@ -183,8 +186,8 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 12.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(HuenoColors.InkRaised),
+                .clip(HuenoShapes.Large)
+                .background(HuenoColors.Surface),
         ) {
             // The photo and its gestures live in their own layer. The zoom buttons are a sibling of
             // it, not a child, so pressing a button never also moves the ring.
@@ -234,7 +237,7 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
                 Canvas(Modifier.fillMaxSize()) {
                     val view = View(IntSize(size.width.toInt(), size.height.toInt()), photo, zoom, pan)
                     val center = view.positionOf(pointX, pointY)
-                    drawCircle(HuenoColors.Ink, 26f, center, style = Stroke(width = 5f))
+                    drawCircle(HuenoBrand.Ink, 26f, center, style = Stroke(width = 5f))
                     drawCircle(Color.White, 22f, center, style = Stroke(width = 5f))
                     drawCircle(Color.White, 3f, center)
                 }
@@ -243,8 +246,8 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(12.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(HuenoColors.Ink)
+                    .clip(HuenoShapes.Large)
+                    .background(HuenoColors.Background)
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -267,30 +270,45 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
             Box(
                 Modifier
                     .size(64.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(HuenoShapes.Medium)
                     .background(Color(rgb.r, rgb.g, rgb.b))
-                    .border(2.dp, HuenoColors.OnInk, RoundedCornerShape(16.dp)),
+                    .border(2.dp, HuenoColors.Text, HuenoShapes.Medium),
             )
             Column(Modifier.weight(1f)) {
-                Text(name.plain, color = HuenoColors.OnInk, fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+                Text(name.plain, color = HuenoColors.Text, fontSize = HuenoType.Display, lineHeight = HuenoType.DisplayLine, fontWeight = FontWeight.Bold)
                 Text(
                     stringResource(R.string.detail_and_hex, name.detail, rgb.hex),
-                    color = HuenoColors.OnInkMuted,
-                    fontSize = 15.sp,
+                    color = HuenoColors.TextMuted,
+                    fontSize = HuenoType.Body,
                 )
             }
         }
         Text(
             stringResource(R.string.photo_hint),
-            color = HuenoColors.OnInkMuted,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(horizontal = 20.dp),
+            color = HuenoColors.TextMuted,
+            fontSize = HuenoType.Label,
+            modifier = Modifier.padding(horizontal = HuenoSize.ScreenPadding),
         )
-        Button(
+        HuenoPrimaryButton(
+            text = stringResource(R.string.photo_save),
             onClick = { onSave(rgb, Thumbnails.around(photo, pointX, pointY)) },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp).height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HuenoColors.OnInk, contentColor = HuenoColors.Ink),
-        ) { Text(stringResource(R.string.photo_save), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HuenoSize.ScreenPadding, vertical = 12.dp),
+        )
+    }
+}
+
+/** The bar at the top of the Photo tab, laid out like the other tabs' bars. */
+@Composable
+private fun PhotoBar(actions: @Composable () -> Unit = {}) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .padding(start = HuenoSize.ScreenPadding, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TabTitle(stringResource(R.string.photo_title), Modifier.weight(1f), showLogo = true)
+        actions()
     }
 }
 
@@ -306,8 +324,8 @@ private fun ZoomButton(symbol: String, description: String, enabled: Boolean, on
     ) {
         Text(
             symbol,
-            color = if (enabled) HuenoColors.OnInk else HuenoColors.OnInkMuted,
-            fontSize = 24.sp,
+            color = if (enabled) HuenoColors.Text else HuenoColors.TextMuted,
+            fontSize = HuenoType.Headline,
             fontWeight = FontWeight.Medium,
         )
     }

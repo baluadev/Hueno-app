@@ -56,6 +56,12 @@ import com.hueno.coloridentifier.ui.AdBanner
 import com.hueno.coloridentifier.ui.Capture
 import com.hueno.coloridentifier.ui.CaptureSource
 import com.hueno.coloridentifier.ui.HuenoColors
+import com.hueno.coloridentifier.ui.HuenoPrimaryButton
+import com.hueno.coloridentifier.ui.HuenoSecondaryButton
+import com.hueno.coloridentifier.ui.HuenoSize
+import com.hueno.coloridentifier.ui.OverlayHeader
+import com.hueno.coloridentifier.ui.HuenoShapes
+import com.hueno.coloridentifier.ui.HuenoType
 import com.hueno.coloridentifier.ui.HuenoIcons
 import com.hueno.coloridentifier.ui.Speaker
 import com.hueno.coloridentifier.ui.ThumbnailImage
@@ -88,44 +94,24 @@ fun ResultScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HuenoColors.Paper)
+            .background(HuenoColors.Background)
             .safeDrawingPadding()
             .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val back = stringResource(R.string.back)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .semantics { contentDescription = back },
-                contentAlignment = Alignment.Center,
-            ) { Icon(HuenoIcons.Back, contentDescription = null, tint = HuenoColors.OnPaper) }
-            Text(
-                stringResource(R.string.result_title),
-                color = HuenoColors.OnPaper,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
+        OverlayHeader(onBack = onBack, title = stringResource(R.string.result_title))
 
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 24.dp),
+            modifier = Modifier.padding(horizontal = HuenoSize.ScreenPadding).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(168.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(HuenoShapes.Large)
                     .background(Color(rgb.r, rgb.g, rgb.b))
                     // A hairline keeps very light colors visible against the paper background.
-                    .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(24.dp)),
+                    .border(1.dp, HuenoColors.Line, HuenoShapes.Large),
                 contentAlignment = Alignment.BottomStart,
             ) {
                 // The object the color came from, so the swatch can be matched to a real thing.
@@ -136,8 +122,8 @@ fun ResultScreen(
                         modifier = Modifier
                             .padding(12.dp)
                             .size(84.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(16.dp)),
+                            .clip(HuenoShapes.Medium)
+                            .border(2.dp, Color.White, HuenoShapes.Medium),
                     )
                 }
             }
@@ -146,37 +132,38 @@ fun ResultScreen(
                 Column(Modifier.weight(1f)) {
                     Text(
                         capture.name.plain,
-                        color = HuenoColors.OnPaper,
-                        fontSize = 38.sp,
-                        lineHeight = 42.sp,
+                        color = HuenoColors.Text,
+                        fontSize = HuenoType.Display,
+                        lineHeight = HuenoType.DisplayLine,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.semantics { heading() },
                     )
                     Text(
                         stringResource(R.string.result_closest, capture.name.detail),
-                        color = HuenoColors.OnPaperMuted,
-                        fontSize = 16.sp,
+                        color = HuenoColors.TextMuted,
+                        fontSize = HuenoType.Body,
                     )
                 }
                 val speak = stringResource(R.string.camera_speak)
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(HuenoSize.Touch)
                         .clip(CircleShape)
-                        .background(HuenoColors.OnPaper)
+                        .background(HuenoColors.Surface)
+                        .border(1.dp, HuenoColors.Line, CircleShape)
                         .clickable(role = Role.Button) { speaker.say(capture.name.plain) }
                         .semantics { contentDescription = speak },
                     contentAlignment = Alignment.Center,
-                ) { Icon(HuenoIcons.Speak, contentDescription = null, tint = HuenoColors.Paper) }
+                ) { Icon(HuenoIcons.Speak, contentDescription = null, tint = HuenoColors.Text) }
             }
 
             QualityNote(capture)
 
             Card {
                 CodeRow(stringResource(R.string.result_hex), rgb.hex, copyValue = if (hexWithHash) rgb.hex else rgb.hex.removePrefix("#"))
-                HorizontalDivider(color = HuenoColors.PaperLine)
+                HorizontalDivider(color = HuenoColors.Line)
                 CodeRow(stringResource(R.string.result_rgb), stringResource(R.string.rgb_value, rgb.r, rgb.g, rgb.b))
-                HorizontalDivider(color = HuenoColors.PaperLine)
+                HorizontalDivider(color = HuenoColors.Line)
                 CodeRow(stringResource(R.string.result_hsl), stringResource(R.string.hsl_value, h, s, l))
             }
 
@@ -186,7 +173,7 @@ fun ResultScreen(
                     value = capture.label ?: stringResource(R.string.result_no_name),
                     action = stringResource(R.string.result_edit),
                 ) { renaming = true }
-                HorizontalDivider(color = HuenoColors.PaperLine)
+                HorizontalDivider(color = HuenoColors.Line)
                 EditRow(
                     label = stringResource(R.string.result_collection),
                     value = capture.collection ?: stringResource(R.string.result_no_collection),
@@ -194,31 +181,18 @@ fun ResultScreen(
                 ) { moving = true }
             }
 
-            Button(
+            HuenoPrimaryButton(
+                text = stringResource(R.string.result_compare),
                 onClick = onCompare,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HuenoColors.Action,
-                    contentColor = HuenoColors.OnAction,
-                ),
-            ) {
-                Icon(HuenoIcons.Compare, contentDescription = null, modifier = Modifier.size(20.dp))
-                Text(
-                    stringResource(R.string.result_compare),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-            OutlinedButton(onClick = onDelete, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                Icon(HuenoIcons.Trash, contentDescription = null, tint = HuenoColors.OnPaper, modifier = Modifier.size(20.dp))
-                Text(
-                    stringResource(R.string.result_delete),
-                    color = HuenoColors.OnPaper,
-                    fontSize = 15.sp,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
+                icon = HuenoIcons.Compare,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            HuenoSecondaryButton(
+                text = stringResource(R.string.result_delete),
+                onClick = onDelete,
+                icon = HuenoIcons.Trash,
+                modifier = Modifier.fillMaxWidth(),
+            )
             bannerUnitId?.let { AdBanner(it) }
         }
     }
@@ -251,9 +225,9 @@ private fun Card(content: @Composable () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(HuenoColors.Card)
-            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp)),
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Surface)
+            .border(1.dp, HuenoColors.Line, HuenoShapes.Medium),
     ) { content() }
 }
 
@@ -273,17 +247,17 @@ private fun QualityNote(capture: Capture) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(HuenoColors.Card)
-            .border(1.dp, HuenoColors.PaperLine, RoundedCornerShape(14.dp))
+            .clip(HuenoShapes.Medium)
+            .background(HuenoColors.Surface)
+            .border(1.dp, HuenoColors.Line, HuenoShapes.Medium)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = HuenoColors.OnPaper, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = HuenoColors.Text, modifier = Modifier.size(20.dp))
         Column {
-            title?.let { Text(it, color = HuenoColors.OnPaper, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
-            detail?.let { Text(it, color = HuenoColors.OnPaper, fontSize = 14.sp) }
+            title?.let { Text(it, color = HuenoColors.Text, fontSize = HuenoType.BodySmall, fontWeight = FontWeight.SemiBold) }
+            detail?.let { Text(it, color = HuenoColors.Text, fontSize = HuenoType.BodySmall) }
         }
     }
 }
@@ -308,12 +282,12 @@ private fun CodeRow(label: String, value: String, copyValue: String = value) {
     ) {
         Text(
             label,
-            color = HuenoColors.OnPaperMuted,
-            fontSize = 13.sp,
+            color = HuenoColors.TextMuted,
+            fontSize = HuenoType.Label,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.width(48.dp),
         )
-        Text(value, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+        Text(value, color = HuenoColors.Text, fontSize = HuenoType.Body, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
         Icon(HuenoIcons.Copy, contentDescription = null, tint = HuenoColors.Action, modifier = Modifier.size(22.dp))
     }
 }
@@ -330,10 +304,10 @@ private fun EditRow(label: String, value: String, action: String, onClick: () ->
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Text(label, color = HuenoColors.OnPaperMuted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            Text(value, color = HuenoColors.OnPaper, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+            Text(label, color = HuenoColors.TextMuted, fontSize = HuenoType.Label, fontWeight = FontWeight.SemiBold)
+            Text(value, color = HuenoColors.Text, fontSize = HuenoType.Body, fontWeight = FontWeight.Medium)
         }
-        Text(action, color = HuenoColors.Action, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        Text(action, color = HuenoColors.Link, fontSize = HuenoType.Body, fontWeight = FontWeight.SemiBold)
     }
 }
 
