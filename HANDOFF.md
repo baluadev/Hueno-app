@@ -408,7 +408,7 @@ Chưa kiểm:
 
 ### Ký app, bản release và sản phẩm Pro (13/11/2026)
 
-- **Upload key** nằm ngoài repo: `~/hueno-signing/hueno-upload.jks` (PKCS12, RSA 4096, alias `hueno-upload`, hạn khoảng 27 năm) và `~/hueno-signing/keystore.properties` (mật khẩu ngẫu nhiên). Thư mục quyền 700, file quyền 600. SHA-256 của chứng chỉ: `ED:73:34:6C:DA:30:71:BD:3C:0E:7C:80:10:FE:35:37:2D:0D:81:86:24:77:E6:87:E4:A0:A4:D0:03:31:CD:34`. **Phải sao lưu cả thư mục này** (trình quản lý mật khẩu hoặc ổ mã hóa). Play App Signing giữ khóa ký app, nên mất upload key thì xin Play đặt lại được, nhưng mất vài ngày.
+- **Upload key** nằm ngoài repo: `~/Documents/keystore/hueno-signing/hueno-upload.jks` (PKCS12, RSA 4096, alias `hueno-upload`, hạn khoảng 27 năm) và `~/Documents/keystore/hueno-signing/keystore.properties` (mật khẩu ngẫu nhiên). Thư mục quyền 700, file quyền 600. SHA-256 của chứng chỉ: `ED:73:34:6C:DA:30:71:BD:3C:0E:7C:80:10:FE:35:37:2D:0D:81:86:24:77:E6:87:E4:A0:A4:D0:03:31:CD:34`. **Phải sao lưu cả thư mục này** (trình quản lý mật khẩu hoặc ổ mã hóa). Play App Signing giữ khóa ký app, nên mất upload key thì xin Play đặt lại được, nhưng mất vài ngày.
 - `app/build.gradle.kts` đọc file trên (đổi đường dẫn bằng thuộc tính Gradle `HUENO_KEYSTORE_PROPERTIES`); không có file thì bản release không được ký. `.gitignore` thêm `keystore.properties`, `*.p12`.
 - Build: `./gradlew :app:bundleRelease` ra `app/build/outputs/bundle/release/app-release.aab` (9,6 MB). APK release sau R8 là 4,8 MB.
 - Đã thử bản release trên máy ảo Pixel 7: camera, lưu màu, lịch sử, so màu, màn Pro, lần mở thứ hai (khởi động quảng cáo và hộp đồng ý). Không crash, R8 không làm hỏng Room, Billing, Ads.

@@ -13,7 +13,7 @@ plugins {
 // upload key can be reset through Play Console support.
 val keystoreProperties = Properties().apply {
     val path = (project.findProperty("HUENO_KEYSTORE_PROPERTIES") as String?)
-        ?: "${System.getProperty("user.home")}/hueno-signing/keystore.properties"
+        ?: "${System.getProperty("user.home")}/Documents/keystore/hueno-signing/keystore.properties"
     val file = File(path)
     if (file.isFile) file.inputStream().use { load(it) }
 }
@@ -44,7 +44,7 @@ android {
         applicationId = "com.hueno.coloridentifier"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = 2
         versionName = "0.1.0"
 
         buildConfigField("String", "PRO_PRODUCT_ID", "\"$proProductId\"")
