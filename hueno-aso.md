@@ -73,8 +73,10 @@ Google Play lập chỉ mục tên, mô tả ngắn và mô tả dài. Tên có 
 **App title (30/30)**
 
 ```
-Hueno: Color Identifier & Name
+Color Identifier & Name: Hueno
 ```
+
+Đổi ngày 13/11/2026 từ "Hueno: Color Identifier & Name": "Hueno" là thương hiệu mới, chưa ai tìm, nên từ khóa được đặt trước để tên vẫn nói rõ app làm gì khi bị cắt ngắn trên thẻ hẹp ("Color Identifier…"). Tên dưới icon trên máy vẫn là "Hueno" (`app_name`). Sau 4–6 tuần xem báo cáo từ khóa trong Play Console; khi "hueno" có lượt tìm thì cân nhắc đưa thương hiệu lên lại.
 
 **Short description (80/80)**
 
@@ -103,7 +105,7 @@ KNOW WHEN TO TRUST THE READING
 
 COMPARE TWO COLORS
 • Capture color A, point at color B, and Hueno says Same, Close or Different
-• See how they differ: "B is green and a little lighter"
+• See how they differ: "B is a little lighter and more vivid"
 • Handy for telling wires apart, checking status lights, pairing clothes, or holding a paint color match against a wall
 
 COLOR PICKER FROM IMAGE

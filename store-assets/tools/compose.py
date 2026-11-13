@@ -7,12 +7,18 @@ import sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 FONT = '/tmp/hueno/fonts/Roboto-Regular.ttf'
+# Noto Sans CJK (OFL) from the emulator's /system/fonts, for Japanese and Korean captions.
+CJK_FONT = '/tmp/hueno/fonts/NotoSansCJK-Regular.ttc'
+CJK_INDEX = {'ja': 0, 'ko': 1}
 INK = (18, 20, 26)
 ON_INK = (244, 244, 242)
 MUTED = (169, 175, 189)
 
-def font(size, weight=b'Bold'):
-    f = ImageFont.truetype(FONT, size)
+def font(size, weight=b'Bold', lang=None):
+    if lang in CJK_INDEX:
+        f = ImageFont.truetype(CJK_FONT, size, index=CJK_INDEX[lang])
+    else:
+        f = ImageFont.truetype(FONT, size)
     f.set_variation_by_name(weight)
     return f
 
@@ -60,18 +66,19 @@ def wrap(draw, text, fnt, max_w):
     lines.append(line)
     return lines
 
-def screenshot(src, caption, out):
+def screenshot(src, caption, out, top=120, bottom=2495, lang=None):
+    """[top] and [bottom] crop the system bars off [src]; the defaults fit the Flip4 captures."""
     W, H = 1080, 1920
     c = background(W, H)
     d = ImageDraw.Draw(c)
-    f = font(76)
+    f = font(76, lang=lang)
     # A '|' in the caption marks a chosen line break, for balanced two-line captions.
     lines = [ln for part in caption.split('|') for ln in wrap(d, part.strip(), f, W - 160)]
     y = 120
     for ln in lines:
         d.text((W // 2, y), ln, font=f, fill=ON_INK, anchor='ma')
         y += 92
-    ph = phone(crop_screen(src), H - y - 70)
+    ph = phone(crop_screen(src, top, bottom), H - y - 70)
     paste_with_shadow(c, ph, ((W - ph.width) // 2, y + 46))
     c.convert('RGB').save(out, optimize=True)
 

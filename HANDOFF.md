@@ -15,7 +15,7 @@ Hueno là app Android nhận màu bằng camera, nói tên màu bằng từ dễ
 | Nhánh | `main`, khớp `origin/main` tại `f8cc577` |
 | Package | `com.hueno.coloridentifier` (chưa khóa, chờ tra nhãn hiệu) |
 | Nền tảng | Kotlin native, Compose, Android tối thiểu 8.0 (API 26) |
-| Ngôn ngữ app | Chỉ tiếng Anh (en-US) |
+| Ngôn ngữ app | en (mặc định), de, es, fr, ja, ko; chọn trong Settings > Language |
 | Kiếm tiền | Miễn phí + quảng cáo; Pro mua một lần; xem video để có Pro 6 giờ |
 
 Tài liệu trong repo:
@@ -129,7 +129,7 @@ Giới hạn bản miễn phí (trong `ProRules`): 3 lần so màu mỗi ngày, 
 31. Khai Data safety theo SDK quảng cáo; chụp ảnh cửa hàng từ bản build thật; video giới thiệu.
 
 ### F. Nhỏ
-32. Câu giải thích khi so màu sinh bằng tiếng Anh trong `:core-color`.
+32. ~~Câu giải thích khi so màu sinh bằng tiếng Anh trong `:core-color`.~~ Đã dịch qua string resource (13/11/2026); `explanation` tiếng Anh trong core chỉ còn dùng cho test.
 33. Chưa nhúng phông Space Grotesk; app dùng phông hệ thống.
 34. Lộ trình ngày tháng trong `product-plan.md` chưa cập nhật theo tiến độ thật.
 
@@ -431,3 +431,19 @@ Còn lại: thêm người thử nghiệm (email) vào Internal testing rồi ph
 - **Doanh thu quảng cáo** (`ad_impression_scaled`, giống các app khác của studio): `OnPaidEventListener` gắn vào banner (`AdBanner`, nối qua `LocalAdPaid`) và video thưởng (`AdsController`). `AdRevenue.from()` đổi `AdValue` (micros) ra tiền, lấy mạng nguồn từ `ResponseInfo.loadedAdapterResponseInfo.adSourceName`. `AdRevenue.scaledValue()`: nhân 100, bỏ nếu dưới 0,01, chặn trần 25 (có unit test). Tham số: `ad_platform=AdMob`, `ad_source`, `ad_unit_name`, `ad_format` (banner/rewarded), `value`, `currency` (tiền tệ của tài khoản AdMob, không phải lúc nào cũng USD), `precision`.
 - Đã thấy listener của banner chạy trên máy ảo với quảng cáo thử; quảng cáo thử báo 0 USD nên sự kiện bị bỏ đúng như quy tắc. Chưa thấy sự kiện có giá trị thật (cần quảng cáo thật, mà AdMob chưa có form đồng ý).
 - Chính sách trên `site/privacy.html` đã thêm câu về sự kiện doanh thu quảng cáo (vẫn chưa đẩy).
+
+### Đổi tên Play, đa ngôn ngữ và ASO tier 1 (13/11/2026, chưa commit)
+- Tên trên Play đổi thành "Color Identifier & Name: Hueno" (đã lưu trên Play Console). Lý do ở `hueno-aso.md` mục 3.
+- `:core-color` trả thêm dữ liệu có cấu trúc: `ColorName.reddish`; `Comparison.kind`, `familyA`, `familyB`, `lightness`, `chroma`. Chuỗi tiếng Anh `plain`/`explanation` giữ nguyên cho test, CSV và Analytics.
+- App dựng tên màu và câu so sánh từ string resource trong `ui/ColorText.kt` (`localizedPlain()`, `localizedExplanation()`). Mỗi sắc độ là một tên trọn vẹn (`color_blue_light`…) và mỗi tổ hợp thay đổi là một câu trọn vẹn (`cmp_change_*`), để không ghép mảnh tiếng Anh.
+- Đổi ngôn ngữ trong app: `ui/settings/LanguagePicker.kt`, dùng AppCompat `setApplicationLocales`. `MainActivity` giờ là `AppCompatActivity`, theme kế thừa `Theme.AppCompat.Light.NoActionBar`. Manifest có `AppLocalesMetadataHolderService` (autoStoreLocales) cho Android 12 trở xuống. `generateLocaleConfig` cùng `res/resources.properties` làm app hiện trong mục ngôn ngữ theo app của Android 13+.
+- `Speaker` đọc bằng ngôn ngữ của app, máy không có giọng đó thì đọc tiếng Anh. Thời gian trong History cũng theo ngôn ngữ app.
+- Bản dịch `values-de/es/fr/ja/ko` do AI dịch, chưa có người bản ngữ duyệt. Chỗ nên nhờ người bản ngữ xem: tên của black/white ở sắc độ sáng/tối (gượng ở mọi ngôn ngữ); de "A ist ein Blau."; ja 水色/明るい黒; ko 옅은 검정.
+- Tên màu chi tiết ("Sienna", "Royal blue") vẫn là tiếng Anh ở mọi ngôn ngữ. Muốn dịch thì phải làm bảng tên riêng cho từng ngôn ngữ.
+- Đã xem trên máy ảo điện thoại (API 35) bằng cả 5 ngôn ngữ: camera, so sánh, History, Pro, Settings. Chữ không bị cắt. Chưa xem trên tablet.
+- Lint: sửa `HuenoApp` dùng `LocalActivity` thay vì ép kiểu `LocalContext`. `lintDebug` giờ không còn lỗi.
+- Listing tier 1 nằm trong `aso/` (en-GB, de-DE, fr-FR, es-ES, ja-JP, ko-KR). Mỗi file có tên, mô tả ngắn, mô tả đầy đủ, từ khóa và số ký tự; tất cả trong giới hạn. Từ khóa chọn theo phán đoán, không có số liệu lượt tìm; xem báo cáo từ khóa trong Play Console sau 4–6 tuần. Đã nhập lên Play Console và lưu nháp (13/11/2026): thêm 6 ngôn ngữ vào listing mặc định, dùng hình của en-US. Chưa gửi duyệt.
+- Website: FAQ ghi các ngôn ngữ, câu ví dụ so sánh khớp với app. Chưa deploy.
+- Ảnh store điện thoại cho de, fr, es, ja, ko (13/11/2026): `store-assets/localized/<lang>/<lang>-1-camera.png` … `-6-history.png`, 1080×1920, cùng 6 nội dung như bộ en-US, chú thích đã dịch trong `store-assets/tools/build_localized.py`. `compose.py` có thêm font Noto Sans CJK (lấy từ `/system/fonts` của emulator, đặt ở `/tmp/hueno/fonts/`) cho ja/ko. Chụp trên emulator điện thoại 1080×2400 (API 35): màn camera là cảnh giả lập của emulator (vòng ngắm đặt vào ô xanh trên TV và gỗ nâu), màn ảnh/chi tiết/lịch sử dùng ảnh bảng màu mẫu; dòng số đo gỡ lỗi tạm ẩn khi chụp, đã bật lại. Đã tải lên Play và gắn vào ô ảnh điện thoại của từng ngôn ngữ theo thứ tự 1 → 6, lưu nháp. en-GB và ảnh tablet của mọi ngôn ngữ vẫn dùng bộ en-US.
+- Script chụp tự động ở `/tmp/hueno-l10n/` (không nằm trong repo). **Bài học:** script chạm theo toạ độ phải kiểm tra app nào đang ở trên cùng trước mỗi lần chạm. Lần đầu không kiểm tra, Hueno bị thoát ra ngoài và các lần chạm rơi vào app Google và Chrome trên emulator: vài tìm kiếm vô nghĩa, và Chrome trên emulator bị đăng nhập bằng tài khoản của chủ dự án (đã đăng xuất theo yêu cầu, tài khoản chưa được xác minh nên không có gì được đồng bộ).
+- Đổi chuỗi ja `calibrate_title` thành 白い物に向けてください cho vừa một dòng.
