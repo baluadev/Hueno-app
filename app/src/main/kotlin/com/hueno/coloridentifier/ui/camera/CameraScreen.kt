@@ -79,6 +79,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -632,46 +634,77 @@ private fun SizeSelector(selected: SampleSize, onSelect: (SampleSize) -> Unit, m
     }
 }
 
+/**
+ * The live reading under the viewfinder. Its height never changes while the camera runs: the name
+ * keeps one line (shrinking a long one rather than wrapping), the shade name one line, and the tip
+ * always holds two lines even when there is no tip. Everything is aligned to the top, so the name
+ * stays put and the buttons below do not move when a tip comes and goes.
+ */
 @Composable
 private fun ReadingRow(reading: ColorReading?, frozen: Boolean, onSpeak: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Box(
             Modifier
+                .padding(top = 4.dp)
                 .size(64.dp)
                 .clip(HuenoShapes.Medium)
                 .background(reading?.rgb?.let { Color(it.r, it.g, it.b) } ?: HuenoColors.Surface)
                 .border(2.dp, HuenoColors.Text, HuenoShapes.Medium),
         )
         Column(Modifier.weight(1f)) {
-            Text(
+            OneLineName(
                 reading?.name?.localizedPlain() ?: stringResource(R.string.camera_starting),
-                color = HuenoColors.Text,
-                fontSize = if (reading == null) HuenoType.Title else HuenoType.Display,
-                fontWeight = FontWeight.Bold,
-                lineHeight = HuenoType.DisplayLine,
+                largest = if (reading == null) HuenoType.Title else HuenoType.Display,
             )
+            Text(
+                reading?.let { stringResource(R.string.detail_and_hex, it.name.detail, it.rgb.hex) }.orEmpty(),
+                color = HuenoColors.TextMuted,
+                fontSize = HuenoType.Body,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val tip = when {
+                reading == null -> null
+                frozen -> stringResource(R.string.camera_frozen_hint)
+                else -> reading.confidence.issue?.let { stringResource(it.tipRes()) }
+            }
+            Text(
+                tip.orEmpty(),
+                color = HuenoColors.Text,
+                fontSize = HuenoType.Label,
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        // The button keeps its place before the first reading too, so the text does not reflow.
+        Box(Modifier.padding(top = 12.dp).size(48.dp)) {
             if (reading != null) {
-                Text(
-                    stringResource(R.string.detail_and_hex, reading.name.detail, reading.rgb.hex),
-                    color = HuenoColors.TextMuted,
-                    fontSize = HuenoType.Body,
-                )
-                val tip = if (frozen) {
-                    stringResource(R.string.camera_frozen_hint)
-                } else {
-                    reading.confidence.issue?.let { stringResource(it.tipRes()) }
-                }
-                tip?.let { Text(it, color = HuenoColors.Text, fontSize = HuenoType.Label) }
+                RoundIconButton(HuenoIcons.Speak, stringResource(R.string.camera_speak), active = false, onClick = onSpeak)
             }
         }
-        if (reading != null) {
-            RoundIconButton(HuenoIcons.Speak, stringResource(R.string.camera_speak), active = false, onClick = onSpeak)
-        }
     }
+}
+
+/** A color name on one line: long names (in any language) step down in size instead of wrapping. */
+@Composable
+private fun OneLineName(text: String, largest: TextUnit) {
+    var size by remember(text, largest) { mutableStateOf(largest) }
+    Text(
+        text,
+        color = HuenoColors.Text,
+        fontSize = size,
+        fontWeight = FontWeight.Bold,
+        lineHeight = HuenoType.DisplayLine,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Clip,
+        onTextLayout = { if (it.hasVisualOverflow && size.value > 18f) size = (size.value * 0.9f).sp },
+    )
 }
 
 @Composable
