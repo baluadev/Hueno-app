@@ -3,7 +3,7 @@ package com.hueno.coloridentifier
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -19,7 +19,7 @@ import com.hueno.coloridentifier.ui.splash.SplashOverlay
 
 private const val LARGE_SCREEN_DP = 600
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         // Folding or unfolding changes the screen class without recreating the activity.

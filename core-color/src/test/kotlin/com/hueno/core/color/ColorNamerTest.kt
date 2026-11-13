@@ -49,6 +49,15 @@ class ColorNamerTest {
         assertEquals(wrong.joinToString("\n"), 0, wrong.size)
     }
 
+    /** The app rebuilds the plain name from family, shade and the reddish flag in other languages. */
+    @Test
+    fun reddishFlagMatchesThePlainName() {
+        for ((hex, _) in golden) {
+            val name = ColorNamer.name(Rgb.parse(hex))
+            assertEquals(hex, name.plain == "Reddish brown", name.reddish)
+        }
+    }
+
     @Test
     fun darkNeutralsAreNotGivenAHueName() {
         // A regression seen in other apps: dark, dull colors all reported under one odd name.

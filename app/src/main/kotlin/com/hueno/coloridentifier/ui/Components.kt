@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -173,18 +174,20 @@ fun TabTitle(text: String, modifier: Modifier = Modifier, showLogo: Boolean = fa
     }
 }
 
-/**
- * "Just now", "5 min ago", "3 h ago", "Yesterday", or a date. Always in English, like the rest of
- * the app; the system's relative-time formatter follows the phone language instead.
- */
+/** "Just now", "5 min ago", "3 h ago", "Yesterday", or a short date, in the app language. */
+@Composable
 fun relativeTime(thenMillis: Long, nowMillis: Long): String {
     val minutes = (nowMillis - thenMillis) / 60_000
     return when {
-        minutes < 1 -> "Just now"
-        minutes < 60 -> "$minutes min ago"
-        minutes < 24 * 60 -> "${minutes / 60} h ago"
-        minutes < 48 * 60 -> "Yesterday"
-        else -> java.text.SimpleDateFormat("MMM d", java.util.Locale.US).format(java.util.Date(thenMillis))
+        minutes < 1 -> stringResource(R.string.time_just_now)
+        minutes < 60 -> stringResource(R.string.time_minutes_ago, minutes.toInt())
+        minutes < 24 * 60 -> stringResource(R.string.time_hours_ago, (minutes / 60).toInt())
+        minutes < 48 * 60 -> stringResource(R.string.time_yesterday)
+        else -> {
+            val locale = LocalConfiguration.current.locales[0]
+            val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "MMMd")
+            java.text.SimpleDateFormat(pattern, locale).format(java.util.Date(thenMillis))
+        }
     }
 }
 

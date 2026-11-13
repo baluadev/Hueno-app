@@ -1,0 +1,289 @@
+<resources>
+    <string name="app_name">Hueno</string>
+
+    <string name="splash_tagline">Farbnamen in einfachen Worten</string>
+
+    <!-- Navigation -->
+    <string name="tab_camera">Kamera</string>
+    <string name="tab_photo">Foto</string>
+    <string name="tab_history">Verlauf</string>
+    <string name="back">Zurück</string>
+    <string name="close">Schließen</string>
+
+    <!-- First run -->
+    <string name="onboarding_title">Wissen, welche Farbe es ist</string>
+    <string name="onboarding_subtitle">Drei Dinge, die du wissen solltest. Dauert zehn Sekunden.</string>
+    <string name="onboarding_step1_title">Richte die Kamera auf etwas</string>
+    <string name="onboarding_step1_body">Der Name erscheint in einfachen Worten, zum Beispiel „Dunkelblau“.</string>
+    <string name="onboarding_step2_title">Tippe auf den runden Knopf zum Speichern</string>
+    <string name="onboarding_step2_body">Die Farbe wird mit Namen und Hex-Code gespeichert.</string>
+    <string name="onboarding_step3_title">Mit weißem Papier kalibrieren</string>
+    <string name="onboarding_step3_body">Raumlicht verfälscht Farben. Ein Tippen korrigiert das, und Hueno sagt dir, wenn ein Wert unsicher ist.</string>
+    <string name="onboarding_start">Kamera öffnen</string>
+    <string name="onboarding_note">Hueno fragt gleich nach Kamerazugriff. Die Bilder bleiben auf deinem Handy.</string>
+
+    <!-- Camera permission -->
+    <string name="permission_title">Kamerazugriff</string>
+    <string name="permission_body">Hueno nutzt die Kamera, um Farben zu erkennen. Die Bilder werden auf diesem Handy ausgewertet und verlassen es nie.</string>
+    <string name="permission_allow">Kamera erlauben</string>
+    <string name="permission_blocked_body">Der Kamerazugriff für Hueno ist ausgeschaltet. Öffne die Einstellungen, tippe auf Berechtigungen, dann auf Kamera, und wähle Zulassen.</string>
+    <string name="permission_open_settings">Einstellungen öffnen</string>
+
+    <!-- Camera screen -->
+    <string name="camera_starting">Kamera wird gestartet…</string>
+    <string name="camera_calibrate">Mit weißem Papier kalibrieren</string>
+    <string name="camera_torch">Taschenlampe</string>
+    <string name="camera_freeze">Anhalten</string>
+    <string name="camera_resume">Weiter</string>
+    <string name="camera_capture">Farbe speichern</string>
+    <string name="camera_speak">Farbnamen vorlesen</string>
+    <string name="speak_unavailable">Vorlesen ist nicht verfügbar. Prüfe die Sprachausgabe in den Einstellungen deines Handys und ob eine Stimme installiert ist.</string>
+    <string name="camera_frozen">Angehalten</string>
+    <string name="camera_frozen_hint">Tippe oder ziehe auf dem Bild, um eine andere Stelle zu messen.</string>
+    <string name="camera_issue_start">Die Kamera konnte nicht gestartet werden.</string>
+    <string name="camera_issue_lock">Diese Kamera hat die Fixierung nicht übernommen.</string>
+    <string name="camera_issue_calibration">Das sah nicht nach einfachem weißem Papier aus. Fülle den Ring mit leerem Papier, ohne Druck, Kanten oder Schatten, und versuche es noch einmal.</string>
+    <string name="camera_issue_calibration_bright">Das Papier ist zu hell, die Kamera erkennt seine Farbe nicht. Halte es weiter weg von der Lampe oder kippe es, dann versuche es noch einmal.</string>
+    <string name="camera_issue_calibration_dark">Auf dem Papier ist zu wenig Licht. Sorge für mehr Licht oder schalte zuerst die Taschenlampe ein, dann versuche es noch einmal.</string>
+    <string name="camera_issue_profile">Diese gespeicherte Kalibrierung funktioniert mit dieser Kamera nicht.</string>
+    <string name="camera_issue_cleared_paused">Die Kalibrierung wurde gelöscht, während Hueno im Hintergrund war. Kalibriere bei Bedarf neu.</string>
+    <string name="camera_issue_cleared_torch">Das Licht hat sich geändert, deshalb wurde die Kalibrierung gelöscht. Kalibriere neu mit dem aktuellen Licht.</string>
+    <string name="sample_small">Kleiner Messbereich</string>
+    <string name="sample_medium">Mittlerer Messbereich</string>
+    <string name="sample_large">Großer Messbereich</string>
+    <string name="sample_small_short">S</string>
+    <string name="sample_medium_short">M</string>
+    <string name="sample_large_short">L</string>
+
+    <!-- Confidence -->
+    <string name="confidence_good">Guter Messwert</string>
+    <string name="confidence_fair">Mittlerer Messwert</string>
+    <string name="confidence_poor">Schwacher Messwert</string>
+    <string name="confidence_calibrated">Kalibriert</string>
+    <string name="issue_too_dark">Zu dunkel, mehr Licht</string>
+    <string name="issue_too_bright">Zu hell, Blendung verringern</string>
+    <string name="issue_unsteady">Halte das Handy ruhig</string>
+    <string name="issue_mixed_area">Mehr als eine Farbe im Ring</string>
+    <string name="issue_not_calibrated">Mit weißem Papier kalibrieren für bessere Werte</string>
+
+    <!-- Compare -->
+    <string name="compare_start">Vergleichen</string>
+    <string name="compare_end">Stopp</string>
+    <string name="compare_same">Gleich</string>
+    <string name="compare_close">Ähnlich</string>
+    <string name="compare_different">Anders</string>
+    <string name="compare_a">A</string>
+    <string name="compare_b">B</string>
+    <string name="compare_swatch_a">Farbe A, %1$s</string>
+    <string name="compare_swatch_b">Farbe B, %1$s</string>
+
+    <!-- Calibration -->
+    <string name="calibrate_title">Richte die Kamera auf etwas Weißes</string>
+    <string name="calibrate_body">Nimm leeres weißes Druckerpapier, fülle damit den Ring und tippe auf den Knopf. Hueno gleicht das Licht um dich herum aus. Eine hellgraue oder cremefarbene Wand sieht für die Kamera auch weiß aus und würde jede Farbe verfälschen.</string>
+    <string name="calibrate_now">Jetzt kalibrieren</string>
+    <string name="calibrate_clear">Kalibrierung löschen</string>
+    <string name="calibrate_cancel">Abbrechen</string>
+    <string name="calibrate_done_title">Kalibriert</string>
+    <string name="calibrate_done_body">Die Werte sind jetzt an dieses Licht angepasst. Das gilt, bis du die Kamera verlässt oder sich das Licht ändert.</string>
+    <string name="calibrate_again">Neu kalibrieren</string>
+    <string name="calibrate_close_panel">Kalibrierung schließen</string>
+    <string name="profile_save">Für diesen Ort speichern</string>
+    <string name="profile_saved_heading">Gespeicherte Orte</string>
+    <string name="profile_use">Nutzen</string>
+    <string name="profile_delete">%1$s löschen</string>
+    <string name="profile_note">Eine gespeicherte Kalibrierung passt nur zu dem Licht, in dem sie erstellt wurde.</string>
+    <string name="profile_unsupported">Die Kamera dieses Handys kann gespeicherte Einstellungen nicht wiederherstellen. Eine Kalibrierung gilt deshalb nur für eine Sitzung.</string>
+    <string name="profile_name_title">Ort benennen</string>
+    <string name="profile_name_body">Nenne den Ort und das Licht, zum Beispiel „Werkstatt, Lampen an“.</string>
+    <string name="profile_name_label">Ort</string>
+
+    <!-- Captured color -->
+    <string name="result_title">Gespeicherte Farbe</string>
+    <string name="result_closest">Nächster benannter Farbton: %1$s</string>
+    <string name="result_hex">HEX</string>
+    <string name="result_rgb">RGB</string>
+    <string name="result_hsl">HSL</string>
+    <string name="result_copy">%1$s kopieren</string>
+    <string name="result_copied">%1$s kopiert</string>
+    <string name="result_from_photo">Aus einem Foto gewählt. Genauer Pixelwert.</string>
+    <string name="result_your_name">Dein Name dafür</string>
+    <string name="result_no_name">Noch keiner</string>
+    <string name="result_edit">Bearbeiten</string>
+    <string name="result_collection">Sammlung</string>
+    <string name="result_no_collection">Keine</string>
+    <string name="result_change">Ändern</string>
+    <string name="rename_title">Farbe benennen</string>
+    <string name="rename_body">Gib ihr einen Namen, den du wiedererkennst, zum Beispiel „Wohnzimmerwand“. Lass das Feld leer, um den Namen zu entfernen.</string>
+    <string name="dialog_save">Speichern</string>
+    <string name="collection_title">Zu einer Sammlung hinzufügen</string>
+    <string name="collection_new">Neue Sammlung</string>
+    <string name="result_compare">Mit Kamera vergleichen</string>
+    <string name="result_delete">Löschen</string>
+    <string name="rgb_value">%1$d, %2$d, %3$d</string>
+    <string name="hsl_value">%1$d°, %2$d%%, %3$d%%</string>
+
+    <!-- Photo -->
+    <string name="photo_title">Foto</string>
+    <string name="photo_choose">Foto auswählen</string>
+    <string name="photo_choose_another">Anderes Foto</string>
+    <string name="photo_empty_title">Farbe aus einem Foto wählen</string>
+    <string name="photo_empty_body">Öffne ein Foto oder einen Screenshot und tippe oder ziehe, um jede Farbe darin zu erkennen.</string>
+    <string name="photo_hint">Tippe oder ziehe, um den Ring zu bewegen. Mit zwei Fingern zoomen.</string>
+    <string name="photo_zoom_in">Vergrößern</string>
+    <string name="photo_zoom_out">Verkleinern</string>
+    <string name="photo_save">Diese Farbe speichern</string>
+    <string name="photo_error">Dieses Foto konnte nicht geöffnet werden.</string>
+    <string name="photo_description">Ausgewähltes Foto</string>
+
+    <!-- Pro -->
+    <string name="pro_title">Hueno Pro</string>
+    <string name="pro_intro">Alles, was du zum Erkennen von Farben brauchst, ist schon dabei. Pro entfernt die Limits und die Werbung.</string>
+    <string name="pro_reason_compare">Du hast die %1$d Vergleiche für heute aufgebraucht.</string>
+    <string name="pro_reason_history">Dein Verlauf enthält %1$d Farben. Das ist das Limit ohne Pro.</string>
+    <string name="pro_benefit_ads">Nirgends Werbung</string>
+    <string name="pro_benefit_history">Unbegrenzter Verlauf</string>
+    <string name="pro_benefit_compare">Unbegrenzte Farbvergleiche</string>
+    <string name="pro_benefit_export">Farben als CSV exportieren</string>
+    <string name="pro_reason_export">Der CSV-Export gehört zu Pro.</string>
+    <string name="pro_reason_profile">Ohne Pro kannst du %1$d gespeicherte Kalibrierung behalten.</string>
+    <string name="pro_benefit_profiles">Eine gespeicherte Kalibrierung für jeden Raum</string>
+    <string name="pro_buy_title">Pro kaufen, für immer deins</string>
+    <string name="pro_buy_subtitle">Einmal zahlen. Kein Abo.</string>
+    <string name="pro_buy_unavailable">Gerade nicht verfügbar. Prüfe deine Verbindung.</string>
+    <plurals name="pro_watch_title">
+        <item quantity="one">Pro %1$d Stunde nutzen</item>
+        <item quantity="other">Pro %1$d Stunden nutzen</item>
+    </plurals>
+    <string name="pro_watch_subtitle">Schau ein kurzes Video. Bis zu %1$d Stunden ansammeln.</string>
+    <string name="pro_watch_loading">Video wird geladen…</string>
+    <string name="pro_watch_at_cap">Dein Pass hat das Maximum von %1$d Stunden erreicht.</string>
+    <string name="pro_watch_failed">Gerade ist kein Video verfügbar. Versuche es etwas später noch einmal.</string>
+    <string name="pro_watch_granted">Pro ist an. Viel Spaß!</string>
+    <string name="pro_status_purchased">Du hast Pro. Danke!</string>
+    <string name="pro_status_pass">Pro-Pass aktiv: noch %1$d h %2$d min. Farben, die du jetzt speicherst, bleiben dir danach erhalten.</string>
+    <string name="pro_status_free">Kein Pro-Pass aktiv.</string>
+    <string name="pro_videos_note">Videos laufen nur, wenn du tippst.</string>
+    <string name="pro_privacy">Datenschutzoptionen</string>
+    <string name="pro_restore">Kauf wiederherstellen</string>
+    <string name="pro_restore_checking">Deine Käufe werden bei Google Play geprüft…</string>
+    <string name="pro_event_purchased">Pro gehört dir. Danke!</string>
+    <string name="pro_event_pending">Deine Zahlung wird bearbeitet. Pro wird aktiv, sobald Google Play sie bestätigt.</string>
+    <string name="pro_event_failed">Der Kauf hat nicht geklappt. Dir wurde nichts berechnet.</string>
+    <string name="pro_event_restored">Pro wiederhergestellt. Danke!</string>
+    <string name="pro_event_nothing">Für dieses Google-Konto wurde kein Pro-Kauf gefunden.</string>
+    <string name="pro_event_restore_failed">Google Play ist nicht erreichbar. Prüfe deine Verbindung und versuche es noch einmal.</string>
+    <string name="pro_open">Pro</string>
+    <string name="pro_open_active">Pro an</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_hex_hash">Hex-Codes mit # kopieren</string>
+    <string name="settings_hex_hash_on">Kopiert als #1F3A5F</string>
+    <string name="settings_hex_hash_off">Kopiert als 1F3A5F</string>
+    <string name="settings_pro_free">Werbung und Limits entfernen</string>
+    <string name="settings_pass_left">Pro-Pass aktiv: noch %1$d h %2$d min</string>
+    <string name="settings_privacy_body">Deine Einwilligung zur Werbung ändern</string>
+    <string name="settings_feedback">Feedback senden</string>
+    <string name="settings_feedback_body">Sag uns, was gut funktioniert und was nicht</string>
+    <string name="settings_feedback_subject">Hueno-Feedback</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_icon_credit">Icons: Streamline Core Line Free, CC BY 4.0 (streamlinehq.com)</string>
+    <string name="thumbnail_description">Bild des Objekts</string>
+
+    <!-- History -->
+    <string name="history_title">Verlauf</string>
+    <string name="history_empty_title">Noch keine Farben</string>
+    <string name="history_empty_body">Farben, die du mit der Kamera aufnimmst oder aus einem Foto speicherst, erscheinen hier.</string>
+    <plurals name="history_count">
+        <item quantity="one">%1$d Farbe</item>
+        <item quantity="other">%1$d Farben</item>
+    </plurals>
+    <string name="history_export">Exportieren</string>
+    <string name="history_all">Alle Farben</string>
+    <string name="export_done">Farben exportiert</string>
+    <string name="export_failed">Die Datei konnte nicht geschrieben werden</string>
+    <string name="detail_and_hex">%1$s · %2$s</string>
+
+    <!-- Color names. Whole names per shade, so each language can write them its own way. -->
+    <string name="color_black_light">Helles Schwarz</string>
+    <string name="color_black">Schwarz</string>
+    <string name="color_black_dark">Tiefschwarz</string>
+    <string name="color_white_light">Reinweiß</string>
+    <string name="color_white">Weiß</string>
+    <string name="color_white_dark">Gebrochenes Weiß</string>
+    <string name="color_gray_light">Hellgrau</string>
+    <string name="color_gray">Grau</string>
+    <string name="color_gray_dark">Dunkelgrau</string>
+    <string name="color_red_light">Hellrot</string>
+    <string name="color_red">Rot</string>
+    <string name="color_red_dark">Dunkelrot</string>
+    <string name="color_orange_light">Hellorange</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_orange_dark">Dunkelorange</string>
+    <string name="color_yellow_light">Hellgelb</string>
+    <string name="color_yellow">Gelb</string>
+    <string name="color_yellow_dark">Dunkelgelb</string>
+    <string name="color_green_light">Hellgrün</string>
+    <string name="color_green">Grün</string>
+    <string name="color_green_dark">Dunkelgrün</string>
+    <string name="color_blue_green_light">Helles Blaugrün</string>
+    <string name="color_blue_green">Blaugrün</string>
+    <string name="color_blue_green_dark">Dunkles Blaugrün</string>
+    <string name="color_blue_light">Hellblau</string>
+    <string name="color_blue">Blau</string>
+    <string name="color_blue_dark">Dunkelblau</string>
+    <string name="color_purple_light">Helles Lila</string>
+    <string name="color_purple">Lila</string>
+    <string name="color_purple_dark">Dunkles Lila</string>
+    <string name="color_pink_light">Hellrosa</string>
+    <string name="color_pink">Rosa</string>
+    <string name="color_pink_dark">Dunkelrosa</string>
+    <string name="color_brown_light">Hellbraun</string>
+    <string name="color_brown">Braun</string>
+    <string name="color_brown_dark">Dunkelbraun</string>
+    <string name="color_reddish_brown">Rotbraun</string>
+    <!-- A color family used inside a sentence. In German these are nouns (das Blau), so the cmp_* sentences are built around nouns. -->
+    <string name="family_black">Schwarz</string>
+    <string name="family_white">Weiß</string>
+    <string name="family_gray">Grau</string>
+    <string name="family_red">Rot</string>
+    <string name="family_orange">Orange</string>
+    <string name="family_yellow">Gelb</string>
+    <string name="family_green">Grün</string>
+    <string name="family_blue_green">Blaugrün</string>
+    <string name="family_blue">Blau</string>
+    <string name="family_purple">Lila</string>
+    <string name="family_pink">Rosa</string>
+    <string name="family_brown">Braun</string>
+    <!-- How B differs from A. %1$s and %2$s are family names from family_*. -->
+    <string name="cmp_same">A und B sehen gleich aus.</string>
+    <string name="cmp_close_border">Beide liegen nah an %1$s. B geht etwas Richtung %2$s.</string>
+    <string name="cmp_different">A ist ein %1$s. B ist ein %2$s.</string>
+    <string name="cmp_same_family_tint">Beide sind %1$stöne, mit leicht anderem Farbstich.</string>
+    <string name="cmp_same_family">Beide sind %1$stöne.</string>
+    <string name="cmp_change_vivid">B ist kräftiger.</string>
+    <string name="cmp_change_duller">B ist blasser.</string>
+    <string name="cmp_change_little_lighter">B ist etwas heller.</string>
+    <string name="cmp_change_little_lighter_vivid">B ist etwas heller und kräftiger.</string>
+    <string name="cmp_change_little_lighter_duller">B ist etwas heller und blasser.</string>
+    <string name="cmp_change_little_darker">B ist etwas dunkler.</string>
+    <string name="cmp_change_little_darker_vivid">B ist etwas dunkler und kräftiger.</string>
+    <string name="cmp_change_little_darker_duller">B ist etwas dunkler und blasser.</string>
+    <string name="cmp_change_much_lighter">B ist viel heller.</string>
+    <string name="cmp_change_much_lighter_vivid">B ist viel heller und kräftiger.</string>
+    <string name="cmp_change_much_lighter_duller">B ist viel heller und blasser.</string>
+    <string name="cmp_change_much_darker">B ist viel dunkler.</string>
+    <string name="cmp_change_much_darker_vivid">B ist viel dunkler und kräftiger.</string>
+    <string name="cmp_change_much_darker_duller">B ist viel dunkler und blasser.</string>
+
+    <!-- Time a color was saved -->
+    <string name="time_just_now">Gerade eben</string>
+    <string name="time_minutes_ago">vor %1$d min</string>
+    <string name="time_hours_ago">vor %1$d h</string>
+    <string name="time_yesterday">Gestern</string>
+
+    <!-- Language -->
+    <string name="settings_language">Sprache</string>
+    <string name="language_system">Handysprache</string>
+    <string name="language_dialog_title">App-Sprache</string>
+</resources>

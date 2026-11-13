@@ -37,7 +37,7 @@
     <string name="camera_resume">Resume</string>
     <string name="camera_capture">Capture color</string>
     <string name="camera_speak">Read color name aloud</string>
-    <string name="speak_unavailable">Read aloud is not available. Check text-to-speech in your phone\'s settings and make sure an English voice is installed.</string>
+    <string name="speak_unavailable">Read aloud is not available. Check text-to-speech in your phone\'s settings and make sure a voice is installed.</string>
     <string name="camera_frozen">Frozen</string>
     <string name="camera_frozen_hint">Tap or drag on the picture to read another spot.</string>
     <string name="camera_issue_start">The camera could not be started.</string>
@@ -203,4 +203,87 @@
     <string name="export_done">Colors exported</string>
     <string name="export_failed">The file could not be written</string>
     <string name="detail_and_hex">%1$s · %2$s</string>
+
+    <!-- Color names. Whole names per shade, so each language can write them its own way. -->
+    <string name="color_black_light">Light black</string>
+    <string name="color_black">Black</string>
+    <string name="color_black_dark">Dark black</string>
+    <string name="color_white_light">Light white</string>
+    <string name="color_white">White</string>
+    <string name="color_white_dark">Dark white</string>
+    <string name="color_gray_light">Light gray</string>
+    <string name="color_gray">Gray</string>
+    <string name="color_gray_dark">Dark gray</string>
+    <string name="color_red_light">Light red</string>
+    <string name="color_red">Red</string>
+    <string name="color_red_dark">Dark red</string>
+    <string name="color_orange_light">Light orange</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_orange_dark">Dark orange</string>
+    <string name="color_yellow_light">Light yellow</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_yellow_dark">Dark yellow</string>
+    <string name="color_green_light">Light green</string>
+    <string name="color_green">Green</string>
+    <string name="color_green_dark">Dark green</string>
+    <string name="color_blue_green_light">Light blue-green</string>
+    <string name="color_blue_green">Blue-green</string>
+    <string name="color_blue_green_dark">Dark blue-green</string>
+    <string name="color_blue_light">Light blue</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_blue_dark">Dark blue</string>
+    <string name="color_purple_light">Light purple</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_purple_dark">Dark purple</string>
+    <string name="color_pink_light">Light pink</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_pink_dark">Dark pink</string>
+    <string name="color_brown_light">Light brown</string>
+    <string name="color_brown">Brown</string>
+    <string name="color_brown_dark">Dark brown</string>
+    <string name="color_reddish_brown">Reddish brown</string>
+    <!-- A color family used inside a sentence: "A is red. B is green." -->
+    <string name="family_black">black</string>
+    <string name="family_white">white</string>
+    <string name="family_gray">gray</string>
+    <string name="family_red">red</string>
+    <string name="family_orange">orange</string>
+    <string name="family_yellow">yellow</string>
+    <string name="family_green">green</string>
+    <string name="family_blue_green">blue-green</string>
+    <string name="family_blue">blue</string>
+    <string name="family_purple">purple</string>
+    <string name="family_pink">pink</string>
+    <string name="family_brown">brown</string>
+    <!-- How B differs from A. %1$s and %2$s are family names from family_*. -->
+    <string name="cmp_same">A and B look the same.</string>
+    <string name="cmp_close_border">Both are close to %1$s. B leans a little toward %2$s.</string>
+    <string name="cmp_different">A is %1$s. B is %2$s.</string>
+    <string name="cmp_same_family_tint">Both are %1$s, with a slightly different tint.</string>
+    <string name="cmp_same_family">Both are %1$s.</string>
+    <string name="cmp_change_vivid">B is more vivid.</string>
+    <string name="cmp_change_duller">B is duller.</string>
+    <string name="cmp_change_little_lighter">B is a little lighter.</string>
+    <string name="cmp_change_little_lighter_vivid">B is a little lighter and more vivid.</string>
+    <string name="cmp_change_little_lighter_duller">B is a little lighter and duller.</string>
+    <string name="cmp_change_little_darker">B is a little darker.</string>
+    <string name="cmp_change_little_darker_vivid">B is a little darker and more vivid.</string>
+    <string name="cmp_change_little_darker_duller">B is a little darker and duller.</string>
+    <string name="cmp_change_much_lighter">B is much lighter.</string>
+    <string name="cmp_change_much_lighter_vivid">B is much lighter and more vivid.</string>
+    <string name="cmp_change_much_lighter_duller">B is much lighter and duller.</string>
+    <string name="cmp_change_much_darker">B is much darker.</string>
+    <string name="cmp_change_much_darker_vivid">B is much darker and more vivid.</string>
+    <string name="cmp_change_much_darker_duller">B is much darker and duller.</string>
+
+    <!-- Time a color was saved -->
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%1$d min ago</string>
+    <string name="time_hours_ago">%1$d h ago</string>
+    <string name="time_yesterday">Yesterday</string>
+
+    <!-- Language -->
+    <string name="settings_language">Language</string>
+    <string name="language_system">Phone language</string>
+    <string name="language_dialog_title">App language</string>
 </resources>

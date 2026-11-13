@@ -39,6 +39,11 @@ class ColorDifferenceTest {
         assertFalse(result.sameFamily)
         assertTrue(result.explanation, result.explanation.startsWith("A is red. B is green"))
         assertTrue(result.explanation, result.explanation.contains("lighter"))
+        // The parts the app uses to say the same thing in other languages.
+        assertEquals(ExplanationKind.DIFFERENT_FAMILIES, result.kind)
+        assertEquals(ColorFamily.RED, result.familyA)
+        assertEquals(ColorFamily.GREEN, result.familyB)
+        assertTrue(result.lightness == LightnessChange.LITTLE_LIGHTER || result.lightness == LightnessChange.MUCH_LIGHTER)
     }
 
     /** Seen on a Galaxy Z Flip4: one gray-blue mug read twice was "Close", yet explained as gray versus blue. */
@@ -52,6 +57,7 @@ class ColorDifferenceTest {
         val result = ColorDifference.compare(gray, blue)
         assertEquals(Verdict.CLOSE, result.verdict)
         assertTrue(result.explanation, result.explanation.startsWith("Both are close to gray. B leans a little toward blue"))
+        assertEquals(ExplanationKind.CLOSE_ACROSS_BORDER, result.kind)
     }
 
     @Test
@@ -59,5 +65,16 @@ class ColorDifferenceTest {
         val result = ColorDifference.compare(Rgb.parse("#1F3A5F"), Rgb.parse("#27456F"))
         assertEquals(Verdict.CLOSE, result.verdict)
         assertTrue(result.sameFamily)
+        assertEquals(ExplanationKind.SAME_FAMILY_CHANGED, result.kind)
+        assertTrue(result.lightness == LightnessChange.LITTLE_LIGHTER || result.lightness == LightnessChange.MUCH_LIGHTER)
+    }
+
+    @Test
+    fun identicalColorsHaveNoChangeParts() {
+        val c = Rgb.parse("#1F3A5F")
+        val result = ColorDifference.compare(c, c)
+        assertEquals(ExplanationKind.SAME, result.kind)
+        assertEquals(LightnessChange.NONE, result.lightness)
+        assertEquals(ChromaChange.NONE, result.chroma)
     }
 }

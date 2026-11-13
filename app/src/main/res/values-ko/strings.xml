@@ -1,0 +1,287 @@
+<resources>
+    <string name="app_name">Hueno</string>
+
+    <string name="splash_tagline">색 이름을 쉬운 말로</string>
+
+    <!-- Navigation -->
+    <string name="tab_camera">카메라</string>
+    <string name="tab_photo">사진</string>
+    <string name="tab_history">기록</string>
+    <string name="back">뒤로</string>
+    <string name="close">닫기</string>
+
+    <!-- First run -->
+    <string name="onboarding_title">무슨 색인지 바로 알기</string>
+    <string name="onboarding_subtitle">알아 둘 것은 세 가지예요. 10초면 충분해요.</string>
+    <string name="onboarding_step1_title">아무거나 비춰 보세요</string>
+    <string name="onboarding_step1_body">\"남색\"처럼 쉬운 말로 색 이름이 나타나요.</string>
+    <string name="onboarding_step2_title">둥근 버튼을 눌러 저장하세요</string>
+    <string name="onboarding_step2_body">색이 이름, 헥스 코드와 함께 저장돼요.</string>
+    <string name="onboarding_step3_title">흰 종이로 보정하세요</string>
+    <string name="onboarding_step3_body">실내 조명은 색을 바꿔 보이게 해요. 한 번만 누르면 바로잡을 수 있고, 측정이 불안정하면 Hueno가 알려 드려요.</string>
+    <string name="onboarding_start">카메라 열기</string>
+    <string name="onboarding_note">다음 단계에서 Hueno가 카메라 권한을 요청해요. 화면은 휴대폰 밖으로 나가지 않아요.</string>
+
+    <!-- Camera permission -->
+    <string name="permission_title">카메라 권한</string>
+    <string name="permission_body">Hueno는 색을 읽기 위해 카메라를 사용해요. 화면은 이 휴대폰 안에서만 분석되고 밖으로 전송되지 않아요.</string>
+    <string name="permission_allow">카메라 허용</string>
+    <string name="permission_blocked_body">Hueno의 카메라 권한이 꺼져 있어요. 설정을 열고 권한, 카메라를 차례로 누른 뒤 허용을 선택하세요.</string>
+    <string name="permission_open_settings">설정 열기</string>
+
+    <!-- Camera screen -->
+    <string name="camera_starting">카메라를 켜는 중…</string>
+    <string name="camera_calibrate">흰 종이로 보정</string>
+    <string name="camera_torch">플래시</string>
+    <string name="camera_freeze">정지</string>
+    <string name="camera_resume">다시 보기</string>
+    <string name="camera_capture">색 저장</string>
+    <string name="camera_speak">색 이름 소리로 듣기</string>
+    <string name="speak_unavailable">소리로 읽어 주기를 사용할 수 없어요. 휴대폰 설정에서 텍스트 음성 변환(TTS)을 확인하고 음성이 설치되어 있는지 확인하세요.</string>
+    <string name="camera_frozen">정지됨</string>
+    <string name="camera_frozen_hint">화면을 누르거나 끌어서 다른 곳의 색을 읽어 보세요.</string>
+    <string name="camera_issue_start">카메라를 켤 수 없어요.</string>
+    <string name="camera_issue_lock">이 카메라는 고정 설정을 지원하지 않아요.</string>
+    <string name="camera_issue_calibration">흰 종이로 보이지 않아요. 글씨, 가장자리, 그림자가 없는 빈 종이로 원을 채운 뒤 다시 시도하세요.</string>
+    <string name="camera_issue_calibration_bright">종이가 너무 밝아서 카메라가 색을 볼 수 없어요. 조명에서 떨어뜨리거나 기울인 뒤 다시 시도하세요.</string>
+    <string name="camera_issue_calibration_dark">종이에 비치는 빛이 너무 적어요. 조명을 더하거나 먼저 플래시를 켠 뒤 다시 시도하세요.</string>
+    <string name="camera_issue_profile">저장된 보정을 이 카메라에서 사용할 수 없어요.</string>
+    <string name="camera_issue_cleared_paused">Hueno가 백그라운드에 있는 동안 보정이 해제됐어요. 필요하면 다시 보정하세요.</string>
+    <string name="camera_issue_cleared_torch">조명이 바뀌어서 보정이 해제됐어요. 지금 조명 그대로 다시 보정하세요.</string>
+    <string name="sample_small">작은 측정 영역</string>
+    <string name="sample_medium">중간 측정 영역</string>
+    <string name="sample_large">큰 측정 영역</string>
+    <string name="sample_small_short">소</string>
+    <string name="sample_medium_short">중</string>
+    <string name="sample_large_short">대</string>
+
+    <!-- Confidence -->
+    <string name="confidence_good">측정 양호</string>
+    <string name="confidence_fair">측정 보통</string>
+    <string name="confidence_poor">측정 불량</string>
+    <string name="confidence_calibrated">보정됨</string>
+    <string name="issue_too_dark">너무 어두워요, 조명을 더하세요</string>
+    <string name="issue_too_bright">너무 밝아요, 반사를 줄이세요</string>
+    <string name="issue_unsteady">휴대폰을 흔들리지 않게 잡으세요</string>
+    <string name="issue_mixed_area">원 안에 색이 여러 개 있어요</string>
+    <string name="issue_not_calibrated">흰 종이로 보정하면 더 정확해요</string>
+
+    <!-- Compare -->
+    <string name="compare_start">비교</string>
+    <string name="compare_end">종료</string>
+    <string name="compare_same">같음</string>
+    <string name="compare_close">비슷함</string>
+    <string name="compare_different">다름</string>
+    <string name="compare_a">A</string>
+    <string name="compare_b">B</string>
+    <string name="compare_swatch_a">색 A, %1$s</string>
+    <string name="compare_swatch_b">색 B, %1$s</string>
+
+    <!-- Calibration -->
+    <string name="calibrate_title">흰 물체를 비추세요</string>
+    <string name="calibrate_body">아무것도 인쇄되지 않은 흰 복사용지로 원을 채운 뒤 버튼을 누르세요. Hueno가 지금 있는 곳의 조명에 맞게 색을 보정해요. 밝은 회색이나 미색 벽도 카메라에는 흰색으로 보여서, 모든 색이 틀리게 나올 수 있어요.</string>
+    <string name="calibrate_now">지금 보정</string>
+    <string name="calibrate_clear">보정 해제</string>
+    <string name="calibrate_cancel">취소</string>
+    <string name="calibrate_done_title">보정됨</string>
+    <string name="calibrate_done_body">이제 이 조명에 맞게 보정된 값으로 측정해요. 카메라 화면을 나가거나 조명이 바뀔 때까지 유지돼요.</string>
+    <string name="calibrate_again">다시 보정</string>
+    <string name="calibrate_close_panel">보정 닫기</string>
+    <string name="profile_save">이 장소용으로 저장</string>
+    <string name="profile_saved_heading">저장된 장소</string>
+    <string name="profile_use">사용</string>
+    <string name="profile_delete">%1$s 삭제</string>
+    <string name="profile_note">저장된 보정은 그 보정을 한 때와 같은 조명에서만 정확해요.</string>
+    <string name="profile_unsupported">이 휴대폰의 카메라는 저장된 설정을 복원할 수 없어서, 보정은 한 번 사용하는 동안만 유지돼요.</string>
+    <string name="profile_name_title">장소 이름 정하기</string>
+    <string name="profile_name_body">\"작업실, 조명 켬\"처럼 장소와 조명을 함께 적어 보세요.</string>
+    <string name="profile_name_label">장소</string>
+
+    <!-- Captured color -->
+    <string name="result_title">저장한 색</string>
+    <string name="result_closest">가장 가까운 색 이름: %1$s</string>
+    <string name="result_hex">HEX</string>
+    <string name="result_rgb">RGB</string>
+    <string name="result_hsl">HSL</string>
+    <string name="result_copy">%1$s 복사</string>
+    <string name="result_copied">%1$s 복사됨</string>
+    <string name="result_from_photo">사진에서 고른 색이에요. 정확한 픽셀 값이에요.</string>
+    <string name="result_your_name">내가 붙인 이름</string>
+    <string name="result_no_name">아직 없음</string>
+    <string name="result_edit">편집</string>
+    <string name="result_collection">컬렉션</string>
+    <string name="result_no_collection">없음</string>
+    <string name="result_change">변경</string>
+    <string name="rename_title">색 이름 정하기</string>
+    <string name="rename_body">\"거실 벽\"처럼 알아보기 쉬운 이름을 붙여 보세요. 비워 두면 이름이 지워져요.</string>
+    <string name="dialog_save">저장</string>
+    <string name="collection_title">컬렉션에 추가</string>
+    <string name="collection_new">새 컬렉션</string>
+    <string name="result_compare">카메라로 비교</string>
+    <string name="result_delete">삭제</string>
+    <string name="rgb_value">%1$d, %2$d, %3$d</string>
+    <string name="hsl_value">%1$d°, %2$d%%, %3$d%%</string>
+
+    <!-- Photo -->
+    <string name="photo_title">사진</string>
+    <string name="photo_choose">사진 선택</string>
+    <string name="photo_choose_another">다른 사진 선택</string>
+    <string name="photo_empty_title">사진에서 색 고르기</string>
+    <string name="photo_empty_body">사진이나 스크린샷을 연 뒤, 누르거나 끌어서 원하는 곳의 색을 읽어 보세요.</string>
+    <string name="photo_hint">누르거나 끌어서 원을 옮기세요. 두 손가락으로 확대할 수 있어요.</string>
+    <string name="photo_zoom_in">확대</string>
+    <string name="photo_zoom_out">축소</string>
+    <string name="photo_save">이 색 저장</string>
+    <string name="photo_error">사진을 열 수 없어요.</string>
+    <string name="photo_description">선택한 사진</string>
+
+    <!-- Pro -->
+    <string name="pro_title">Hueno Pro</string>
+    <string name="pro_intro">색을 알아보는 데 필요한 기능은 이미 모두 들어 있어요. Pro는 제한과 광고를 없애 줘요.</string>
+    <string name="pro_reason_compare">오늘 비교 %1$d회를 모두 사용했어요.</string>
+    <string name="pro_reason_history">기록에 색이 %1$d개 있어요. Pro 없이 저장할 수 있는 최대 개수예요.</string>
+    <string name="pro_benefit_ads">광고 완전 제거</string>
+    <string name="pro_benefit_history">기록 무제한</string>
+    <string name="pro_benefit_compare">색 비교 무제한</string>
+    <string name="pro_benefit_export">색을 CSV로 내보내기</string>
+    <string name="pro_reason_export">CSV 내보내기는 Pro 기능이에요.</string>
+    <string name="pro_reason_profile">Pro 없이는 보정을 %1$d개까지 저장할 수 있어요.</string>
+    <string name="pro_benefit_profiles">방마다 보정 저장</string>
+    <string name="pro_buy_title">Pro 구매, 계속 내 것으로</string>
+    <string name="pro_buy_subtitle">한 번만 결제하세요. 구독이 아니에요.</string>
+    <string name="pro_buy_unavailable">지금은 구매할 수 없어요. 인터넷 연결을 확인하세요.</string>
+    <plurals name="pro_watch_title">
+        <item quantity="other">%1$d시간 동안 Pro 사용하기</item>
+    </plurals>
+    <string name="pro_watch_subtitle">짧은 동영상 하나를 시청하세요. 최대 %1$d시간까지 쌓을 수 있어요.</string>
+    <string name="pro_watch_loading">동영상을 불러오는 중…</string>
+    <string name="pro_watch_at_cap">이용권이 최대 %1$d시간에 도달했어요.</string>
+    <string name="pro_watch_failed">지금은 볼 수 있는 동영상이 없어요. 잠시 후 다시 시도하세요.</string>
+    <string name="pro_watch_granted">Pro가 켜졌어요. 즐겁게 사용하세요.</string>
+    <string name="pro_status_purchased">Pro를 구매하셨어요. 감사합니다.</string>
+    <string name="pro_status_pass">Pro 이용권 사용 중: %1$d시간 %2$d분 남음. 지금 저장한 색은 이용권이 끝나도 그대로 남아요.</string>
+    <string name="pro_status_free">사용 중인 Pro 이용권이 없어요.</string>
+    <string name="pro_videos_note">동영상은 직접 눌렀을 때만 재생돼요.</string>
+    <string name="pro_privacy">개인정보 선택</string>
+    <string name="pro_restore">구매 복원</string>
+    <string name="pro_restore_checking">Google Play에서 구매 내역을 확인하는 중…</string>
+    <string name="pro_event_purchased">Pro를 구매하셨어요. 감사합니다!</string>
+    <string name="pro_event_pending">결제를 처리하고 있어요. Google Play에서 확인되는 즉시 Pro가 켜져요.</string>
+    <string name="pro_event_failed">구매가 완료되지 않았어요. 요금은 청구되지 않았어요.</string>
+    <string name="pro_event_restored">Pro가 복원됐어요. 감사합니다!</string>
+    <string name="pro_event_nothing">이 Google 계정에서 Pro 구매 내역을 찾을 수 없어요.</string>
+    <string name="pro_event_restore_failed">Google Play에 연결할 수 없어요. 인터넷 연결을 확인하고 다시 시도하세요.</string>
+    <string name="pro_open">Pro</string>
+    <string name="pro_open_active">Pro 사용 중</string>
+
+    <!-- Settings -->
+    <string name="settings_title">설정</string>
+    <string name="settings_hex_hash">헥스 코드를 #과 함께 복사</string>
+    <string name="settings_hex_hash_on">#1F3A5F 형식으로 복사</string>
+    <string name="settings_hex_hash_off">1F3A5F 형식으로 복사</string>
+    <string name="settings_pro_free">광고와 제한 없애기</string>
+    <string name="settings_pass_left">Pro 이용권 사용 중: %1$d시간 %2$d분 남음</string>
+    <string name="settings_privacy_body">광고 동의 선택 변경</string>
+    <string name="settings_feedback">의견 보내기</string>
+    <string name="settings_feedback_body">좋은 점과 아쉬운 점을 알려 주세요</string>
+    <string name="settings_feedback_subject">Hueno 의견</string>
+    <string name="settings_version">버전 %1$s</string>
+    <string name="settings_icon_credit">아이콘: Streamline Core Line Free, CC BY 4.0 (streamlinehq.com)</string>
+    <string name="thumbnail_description">물체 사진</string>
+
+    <!-- History -->
+    <string name="history_title">기록</string>
+    <string name="history_empty_title">아직 색이 없어요</string>
+    <string name="history_empty_body">카메라로 저장하거나 사진에서 저장한 색이 여기에 표시돼요.</string>
+    <plurals name="history_count">
+        <item quantity="other">색 %1$d개</item>
+    </plurals>
+    <string name="history_export">내보내기</string>
+    <string name="history_all">모든 색</string>
+    <string name="export_done">색을 내보냈어요</string>
+    <string name="export_failed">파일을 저장할 수 없어요</string>
+    <string name="detail_and_hex">%1$s · %2$s</string>
+
+    <!-- Color names. Whole names per shade, so each language can write them its own way. -->
+    <string name="color_black_light">옅은 검정</string>
+    <string name="color_black">검정</string>
+    <string name="color_black_dark">진한 검정</string>
+    <string name="color_white_light">순백색</string>
+    <string name="color_white">흰색</string>
+    <string name="color_white_dark">회백색</string>
+    <string name="color_gray_light">밝은 회색</string>
+    <string name="color_gray">회색</string>
+    <string name="color_gray_dark">어두운 회색</string>
+    <string name="color_red_light">밝은 빨강</string>
+    <string name="color_red">빨강</string>
+    <string name="color_red_dark">어두운 빨강</string>
+    <string name="color_orange_light">밝은 주황</string>
+    <string name="color_orange">주황</string>
+    <string name="color_orange_dark">어두운 주황</string>
+    <string name="color_yellow_light">밝은 노랑</string>
+    <string name="color_yellow">노랑</string>
+    <string name="color_yellow_dark">어두운 노랑</string>
+    <string name="color_green_light">밝은 초록</string>
+    <string name="color_green">초록</string>
+    <string name="color_green_dark">어두운 초록</string>
+    <string name="color_blue_green_light">밝은 청록</string>
+    <string name="color_blue_green">청록</string>
+    <string name="color_blue_green_dark">어두운 청록</string>
+    <string name="color_blue_light">하늘색</string>
+    <string name="color_blue">파랑</string>
+    <string name="color_blue_dark">남색</string>
+    <string name="color_purple_light">연보라</string>
+    <string name="color_purple">보라</string>
+    <string name="color_purple_dark">어두운 보라</string>
+    <string name="color_pink_light">연분홍</string>
+    <string name="color_pink">분홍</string>
+    <string name="color_pink_dark">진분홍</string>
+    <string name="color_brown_light">밝은 갈색</string>
+    <string name="color_brown">갈색</string>
+    <string name="color_brown_dark">어두운 갈색</string>
+    <string name="color_reddish_brown">적갈색</string>
+    <!-- A color family used inside a sentence: "A is red. B is green." -->
+    <string name="family_black">검은색</string>
+    <string name="family_white">흰색</string>
+    <string name="family_gray">회색</string>
+    <string name="family_red">빨간색</string>
+    <string name="family_orange">주황색</string>
+    <string name="family_yellow">노란색</string>
+    <string name="family_green">초록색</string>
+    <string name="family_blue_green">청록색</string>
+    <string name="family_blue">파란색</string>
+    <string name="family_purple">보라색</string>
+    <string name="family_pink">분홍색</string>
+    <string name="family_brown">갈색</string>
+    <!-- How B differs from A. %1$s and %2$s are family names from family_*. -->
+    <string name="cmp_same">A와 B는 같은 색으로 보여요.</string>
+    <string name="cmp_close_border">둘 다 %1$s에 가까워요. B는 %2$s 쪽으로 조금 기울어요.</string>
+    <string name="cmp_different">A는 %1$s 계열, B는 %2$s 계열이에요.</string>
+    <string name="cmp_same_family_tint">둘 다 %1$s 계열이지만 색조가 조금 달라요.</string>
+    <string name="cmp_same_family">둘 다 %1$s 계열이에요.</string>
+    <string name="cmp_change_vivid">B가 더 선명해요.</string>
+    <string name="cmp_change_duller">B가 더 탁해요.</string>
+    <string name="cmp_change_little_lighter">B가 조금 더 밝아요.</string>
+    <string name="cmp_change_little_lighter_vivid">B가 조금 더 밝고 선명해요.</string>
+    <string name="cmp_change_little_lighter_duller">B가 조금 더 밝고 탁해요.</string>
+    <string name="cmp_change_little_darker">B가 조금 더 어두워요.</string>
+    <string name="cmp_change_little_darker_vivid">B가 조금 더 어둡고 선명해요.</string>
+    <string name="cmp_change_little_darker_duller">B가 조금 더 어둡고 탁해요.</string>
+    <string name="cmp_change_much_lighter">B가 훨씬 더 밝아요.</string>
+    <string name="cmp_change_much_lighter_vivid">B가 훨씬 더 밝고 선명해요.</string>
+    <string name="cmp_change_much_lighter_duller">B가 훨씬 더 밝고 탁해요.</string>
+    <string name="cmp_change_much_darker">B가 훨씬 더 어두워요.</string>
+    <string name="cmp_change_much_darker_vivid">B가 훨씬 더 어둡고 선명해요.</string>
+    <string name="cmp_change_much_darker_duller">B가 훨씬 더 어둡고 탁해요.</string>
+
+    <!-- Time a color was saved -->
+    <string name="time_just_now">방금</string>
+    <string name="time_minutes_ago">%1$d분 전</string>
+    <string name="time_hours_ago">%1$d시간 전</string>
+    <string name="time_yesterday">어제</string>
+
+    <!-- Language -->
+    <string name="settings_language">언어</string>
+    <string name="language_system">휴대폰 언어</string>
+    <string name="language_dialog_title">앱 언어</string>
+</resources>

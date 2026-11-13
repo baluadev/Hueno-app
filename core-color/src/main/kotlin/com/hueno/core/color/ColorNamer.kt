@@ -25,8 +25,12 @@ enum class Shade { LIGHT, NORMAL, DARK }
 data class ColorName(
     val family: ColorFamily,
     val shade: Shade,
+    /** English plain name; the app shows a translated one built from [family], [shade] and [reddish]. */
     val plain: String,
+    /** English name of the closest named shade, for example "Royal blue". */
     val detail: String,
+    /** A brown that leans red, named "Reddish brown" rather than as a shade of brown. */
+    val reddish: Boolean = false,
 )
 
 /**
@@ -41,7 +45,8 @@ object ColorNamer {
         val lch = ColorMath.toOklch(rgb)
         val family = familyOf(lch)
         val shade = shadeOf(family, lch)
-        return ColorName(family, shade, plainLabel(family, shade, lch), NamedColors.nearest(rgb, family).name)
+        val reddish = isReddishBrown(family, shade, lch)
+        return ColorName(family, shade, plainLabel(family, shade, lch), NamedColors.nearest(rgb, family).name, reddish)
     }
 
     internal fun familyOf(c: Oklch): ColorFamily {
@@ -113,9 +118,12 @@ object ColorNamer {
         }
     }
 
+    private fun isReddishBrown(family: ColorFamily, shade: Shade, c: Oklch): Boolean =
+        family == ColorFamily.BROWN && shade == Shade.NORMAL && c.h < 52 && c.c >= 0.08
+
     private fun plainLabel(family: ColorFamily, shade: Shade, c: Oklch): String {
         // A brown that leans red is easier to act on as "Reddish brown" than as a shade of brown.
-        if (family == ColorFamily.BROWN && shade == Shade.NORMAL && c.h < 52 && c.c >= 0.08) return "Reddish brown"
+        if (isReddishBrown(family, shade, c)) return "Reddish brown"
         return when (shade) {
             Shade.LIGHT -> "Light ${family.label.lowercase()}"
             Shade.DARK -> "Dark ${family.label.lowercase()}"

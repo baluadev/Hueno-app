@@ -58,10 +58,7 @@ data class Capture(
     val collection: String? = null,
     /** A small picture of the object; null when there is none. */
     val thumbnail: File? = null,
-) {
-    /** What to call this color in a list: the user's name for it, else its plain color name. */
-    val title: String get() = label ?: name.plain
-}
+)
 
 private fun StoredCapture.toCapture() = Capture(
     id = id,

@@ -1,6 +1,8 @@
 package com.hueno.coloridentifier.ui.camera
 
 import android.Manifest
+import com.hueno.coloridentifier.ui.localizedExplanation
+import com.hueno.coloridentifier.ui.localizedPlain
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -393,7 +395,7 @@ private fun LiveCamera(
                 if (compareReference != null && reading != null) {
                     ComparePanel(reference = compareReference, current = reading.rgb) { speaker.say(it) }
                 } else {
-                    ReadingRow(reading, frozen) { reading?.let { speaker.say(it.name.plain) } }
+                    ReadingRow(reading, frozen) { reading?.let { speaker.say(it.name.localizedPlain(context.resources)) } }
                 }
                 state.issue?.let {
                     Text(
@@ -646,7 +648,7 @@ private fun ReadingRow(reading: ColorReading?, frozen: Boolean, onSpeak: () -> U
         )
         Column(Modifier.weight(1f)) {
             Text(
-                reading?.name?.plain ?: stringResource(R.string.camera_starting),
+                reading?.name?.localizedPlain() ?: stringResource(R.string.camera_starting),
                 color = HuenoColors.Text,
                 fontSize = if (reading == null) HuenoType.Title else HuenoType.Display,
                 fontWeight = FontWeight.Bold,
@@ -832,8 +834,9 @@ private fun ProfileNameDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
 @Composable
 private fun ComparePanel(reference: Rgb, current: Rgb, onSpeak: (String) -> Unit) {
     val result = remember(reference, current) { ColorDifference.compare(reference, current) }
-    val nameA = remember(reference) { ColorNamer.name(reference).plain }
-    val nameB = remember(current) { ColorNamer.name(current).plain }
+    val nameA = remember(reference) { ColorNamer.name(reference) }.localizedPlain()
+    val nameB = remember(current) { ColorNamer.name(current) }.localizedPlain()
+    val explanation = result.localizedExplanation()
     val verdict = stringResource(
         when (result.verdict) {
             Verdict.SAME -> R.string.compare_same
@@ -863,14 +866,14 @@ private fun ComparePanel(reference: Rgb, current: Rgb, onSpeak: (String) -> Unit
                 modifier = Modifier.weight(1f),
             )
             RoundIconButton(HuenoIcons.Speak, stringResource(R.string.camera_speak), active = false) {
-                onSpeak("$verdict. ${result.explanation}")
+                onSpeak("$verdict. $explanation")
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CompareSwatch(stringResource(R.string.compare_a), reference, stringResource(R.string.compare_swatch_a, nameA))
             CompareSwatch(stringResource(R.string.compare_b), current, stringResource(R.string.compare_swatch_b, nameB))
             Text(
-                result.explanation,
+                explanation,
                 color = HuenoColors.Text,
                 fontSize = HuenoType.BodySmall,
                 lineHeight = HuenoType.BodySmallLine,

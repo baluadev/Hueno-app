@@ -1,0 +1,287 @@
+<resources>
+    <string name="app_name">Hueno</string>
+
+    <string name="splash_tagline">色の名前をやさしい言葉で</string>
+
+    <!-- Navigation -->
+    <string name="tab_camera">カメラ</string>
+    <string name="tab_photo">写真</string>
+    <string name="tab_history">履歴</string>
+    <string name="back">戻る</string>
+    <string name="close">閉じる</string>
+
+    <!-- First run -->
+    <string name="onboarding_title">何色かがわかります</string>
+    <string name="onboarding_subtitle">知っておくことは3つだけ。10秒で読めます。</string>
+    <string name="onboarding_step1_title">何にでもカメラを向ける</string>
+    <string name="onboarding_step1_body">「濃い青」のように、わかりやすい言葉で色の名前が出ます。</string>
+    <string name="onboarding_step2_title">丸いボタンをタップして保存</string>
+    <string name="onboarding_step2_body">色は名前とカラーコードと一緒に保存されます。</string>
+    <string name="onboarding_step3_title">白い紙で補正する</string>
+    <string name="onboarding_step3_body">室内の照明では色がずれます。ワンタップで補正でき、読み取りが不確かなときはHuenoがお知らせします。</string>
+    <string name="onboarding_start">カメラを開く</string>
+    <string name="onboarding_note">次にカメラへのアクセスを求めます。映像はスマホの外に出ません。</string>
+
+    <!-- Camera permission -->
+    <string name="permission_title">カメラへのアクセス</string>
+    <string name="permission_body">Huenoはカメラで色を読み取ります。映像はこのスマホの中で分析され、外部に送られることはありません。</string>
+    <string name="permission_allow">カメラを許可</string>
+    <string name="permission_blocked_body">Huenoのカメラへのアクセスがオフになっています。設定を開き、「権限」→「カメラ」の順にタップして「許可」を選んでください。</string>
+    <string name="permission_open_settings">設定を開く</string>
+
+    <!-- Camera screen -->
+    <string name="camera_starting">カメラを起動しています…</string>
+    <string name="camera_calibrate">白い紙で補正</string>
+    <string name="camera_torch">ライト</string>
+    <string name="camera_freeze">停止</string>
+    <string name="camera_resume">再開</string>
+    <string name="camera_capture">色を保存</string>
+    <string name="camera_speak">色の名前を読み上げる</string>
+    <string name="speak_unavailable">読み上げを利用できません。スマホの設定でテキスト読み上げを確認し、音声がインストールされているか確かめてください。</string>
+    <string name="camera_frozen">停止中</string>
+    <string name="camera_frozen_hint">画像をタップまたはドラッグすると、別の場所を読み取れます。</string>
+    <string name="camera_issue_start">カメラを起動できませんでした。</string>
+    <string name="camera_issue_lock">このカメラは固定設定に対応していません。</string>
+    <string name="camera_issue_calibration">無地の白い紙に見えませんでした。文字や端、影が入らないように白紙でリングを埋めて、もう一度お試しください。</string>
+    <string name="camera_issue_calibration_bright">紙が明るすぎて、カメラが色を判別できません。照明から離すか紙を傾けて、もう一度お試しください。</string>
+    <string name="camera_issue_calibration_dark">紙に当たる光が足りません。明るくするかライトをつけてから、もう一度お試しください。</string>
+    <string name="camera_issue_profile">保存した補正はこのカメラでは使えませんでした。</string>
+    <string name="camera_issue_cleared_paused">Huenoがバックグラウンドにある間に補正が解除されました。必要なら補正し直してください。</string>
+    <string name="camera_issue_cleared_torch">光の条件が変わったため、補正を解除しました。今の光のままで補正し直してください。</string>
+    <string name="sample_small">読み取り範囲：小</string>
+    <string name="sample_medium">読み取り範囲：中</string>
+    <string name="sample_large">読み取り範囲：大</string>
+    <string name="sample_small_short">小</string>
+    <string name="sample_medium_short">中</string>
+    <string name="sample_large_short">大</string>
+
+    <!-- Confidence -->
+    <string name="confidence_good">読み取り良好</string>
+    <string name="confidence_fair">読み取りまずまず</string>
+    <string name="confidence_poor">読み取り不安定</string>
+    <string name="confidence_calibrated">補正済み</string>
+    <string name="issue_too_dark">暗すぎます。明るくしてください</string>
+    <string name="issue_too_bright">明るすぎます。反射を減らしてください</string>
+    <string name="issue_unsteady">スマホを動かさずに持ってください</string>
+    <string name="issue_mixed_area">リングの中に複数の色があります</string>
+    <string name="issue_not_calibrated">白い紙で補正すると、より正確に読み取れます</string>
+
+    <!-- Compare -->
+    <string name="compare_start">比較</string>
+    <string name="compare_end">終了</string>
+    <string name="compare_same">同じ</string>
+    <string name="compare_close">近い</string>
+    <string name="compare_different">違う</string>
+    <string name="compare_a">A</string>
+    <string name="compare_b">B</string>
+    <string name="compare_swatch_a">色A、%1$s</string>
+    <string name="compare_swatch_b">色B、%1$s</string>
+
+    <!-- Calibration -->
+    <string name="calibrate_title">白い物に向けてください</string>
+    <string name="calibrate_body">無地の白いコピー用紙でリングを埋めて、ボタンをタップしてください。Huenoが今の光に合わせて補正します。薄い灰色やクリーム色の壁もカメラには白く見えるため、すべての色がずれてしまいます。</string>
+    <string name="calibrate_now">今すぐ補正</string>
+    <string name="calibrate_clear">補正を解除</string>
+    <string name="calibrate_cancel">キャンセル</string>
+    <string name="calibrate_done_title">補正済み</string>
+    <string name="calibrate_done_body">この光に合わせて読み取りを補正しました。カメラを離れるか、光の条件が変わるまで有効です。</string>
+    <string name="calibrate_again">もう一度補正</string>
+    <string name="calibrate_close_panel">補正を閉じる</string>
+    <string name="profile_save">この場所用に保存</string>
+    <string name="profile_saved_heading">保存した場所</string>
+    <string name="profile_use">使う</string>
+    <string name="profile_delete">%1$sを削除</string>
+    <string name="profile_note">保存した補正は、作ったときと同じ光の下で正しく使えます。</string>
+    <string name="profile_unsupported">このスマホのカメラは保存した設定を復元できないため、補正はその回のみ有効です。</string>
+    <string name="profile_name_title">場所に名前をつける</string>
+    <string name="profile_name_body">「作業場・照明あり」のように、場所と光の様子を入れてください。</string>
+    <string name="profile_name_label">場所</string>
+
+    <!-- Captured color -->
+    <string name="result_title">保存した色</string>
+    <string name="result_closest">最も近い色名：%1$s</string>
+    <string name="result_hex">HEX</string>
+    <string name="result_rgb">RGB</string>
+    <string name="result_hsl">HSL</string>
+    <string name="result_copy">%1$sをコピー</string>
+    <string name="result_copied">%1$sをコピーしました</string>
+    <string name="result_from_photo">写真から選んだ色です。ピクセルの正確な値です。</string>
+    <string name="result_your_name">自分でつけた名前</string>
+    <string name="result_no_name">まだありません</string>
+    <string name="result_edit">編集</string>
+    <string name="result_collection">コレクション</string>
+    <string name="result_no_collection">なし</string>
+    <string name="result_change">変更</string>
+    <string name="rename_title">色に名前をつける</string>
+    <string name="rename_body">「リビングの壁」など、自分でわかる名前をつけてください。空欄にすると名前を削除します。</string>
+    <string name="dialog_save">保存</string>
+    <string name="collection_title">コレクションに追加</string>
+    <string name="collection_new">新しいコレクション</string>
+    <string name="result_compare">カメラで比較</string>
+    <string name="result_delete">削除</string>
+    <string name="rgb_value">%1$d, %2$d, %3$d</string>
+    <string name="hsl_value">%1$d°, %2$d%%, %3$d%%</string>
+
+    <!-- Photo -->
+    <string name="photo_title">写真</string>
+    <string name="photo_choose">写真を選ぶ</string>
+    <string name="photo_choose_another">別の写真を選ぶ</string>
+    <string name="photo_empty_title">写真から色を選ぶ</string>
+    <string name="photo_empty_body">写真やスクリーンショットを開き、タップまたはドラッグして好きな場所の色を読み取ります。</string>
+    <string name="photo_hint">タップまたはドラッグでリングを動かせます。ピンチで拡大できます。</string>
+    <string name="photo_zoom_in">拡大</string>
+    <string name="photo_zoom_out">縮小</string>
+    <string name="photo_save">この色を保存</string>
+    <string name="photo_error">この写真は開けませんでした。</string>
+    <string name="photo_description">選択した写真</string>
+
+    <!-- Pro -->
+    <string name="pro_title">Hueno Pro</string>
+    <string name="pro_intro">色を判別するための機能はすべて揃っています。Proでは制限と広告がなくなります。</string>
+    <string name="pro_reason_compare">今日の比較%1$d回分を使い切りました。</string>
+    <string name="pro_reason_history">履歴が%1$d色になりました。Proなしではこれが上限です。</string>
+    <string name="pro_benefit_ads">広告なし</string>
+    <string name="pro_benefit_history">履歴が無制限</string>
+    <string name="pro_benefit_compare">色の比較が無制限</string>
+    <string name="pro_benefit_export">色をCSVに書き出し</string>
+    <string name="pro_reason_export">CSVへの書き出しはProの機能です。</string>
+    <string name="pro_reason_profile">Proなしで保存できる補正は%1$d件です。</string>
+    <string name="pro_benefit_profiles">部屋ごとに補正を保存</string>
+    <string name="pro_buy_title">Proを購入（買い切り）</string>
+    <string name="pro_buy_subtitle">支払いは1回だけ。定期購入ではありません。</string>
+    <string name="pro_buy_unavailable">現在ご利用いただけません。接続を確認してください。</string>
+    <plurals name="pro_watch_title">
+        <item quantity="other">Proを%1$d時間使う</item>
+    </plurals>
+    <string name="pro_watch_subtitle">短い動画を1本見るだけ。最大%1$d時間まで貯められます。</string>
+    <string name="pro_watch_loading">動画を取得しています…</string>
+    <string name="pro_watch_at_cap">パスは上限の%1$d時間に達しています。</string>
+    <string name="pro_watch_failed">今は再生できる動画がありません。しばらくしてからもう一度お試しください。</string>
+    <string name="pro_watch_granted">Proがオンになりました。お楽しみください。</string>
+    <string name="pro_status_purchased">Proを購入済みです。ありがとうございます。</string>
+    <string name="pro_status_pass">Proパス利用中：残り%1$d時間%2$d分。今保存した色は、パス終了後もそのまま残ります。</string>
+    <string name="pro_status_free">利用中のProパスはありません。</string>
+    <string name="pro_videos_note">動画はタップしたときだけ再生されます。</string>
+    <string name="pro_privacy">プライバシーの設定</string>
+    <string name="pro_restore">購入を復元</string>
+    <string name="pro_restore_checking">Google Playで購入履歴を確認しています…</string>
+    <string name="pro_event_purchased">Proを購入しました。ありがとうございます！</string>
+    <string name="pro_event_pending">お支払いを処理中です。Google Playで確認が取れしだい、Proがオンになります。</string>
+    <string name="pro_event_failed">購入は完了しませんでした。料金は請求されていません。</string>
+    <string name="pro_event_restored">Proを復元しました。ありがとうございます！</string>
+    <string name="pro_event_nothing">このGoogleアカウントではProの購入が見つかりませんでした。</string>
+    <string name="pro_event_restore_failed">Google Playに接続できませんでした。接続を確認して、もう一度お試しください。</string>
+    <string name="pro_open">Pro</string>
+    <string name="pro_open_active">Pro利用中</string>
+
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_hex_hash">カラーコードを#付きでコピー</string>
+    <string name="settings_hex_hash_on">#1F3A5Fの形でコピーします</string>
+    <string name="settings_hex_hash_off">1F3A5Fの形でコピーします</string>
+    <string name="settings_pro_free">広告と制限をなくす</string>
+    <string name="settings_pass_left">Proパス利用中：残り%1$d時間%2$d分</string>
+    <string name="settings_privacy_body">広告の同意設定を変更します</string>
+    <string name="settings_feedback">フィードバックを送る</string>
+    <string name="settings_feedback_body">良い点や改善点をお聞かせください</string>
+    <string name="settings_feedback_subject">Huenoへのフィードバック</string>
+    <string name="settings_version">バージョン %1$s</string>
+    <string name="settings_icon_credit">アイコン：Streamline Core Line Free、CC BY 4.0（streamlinehq.com）</string>
+    <string name="thumbnail_description">対象物の画像</string>
+
+    <!-- History -->
+    <string name="history_title">履歴</string>
+    <string name="history_empty_title">まだ色がありません</string>
+    <string name="history_empty_body">カメラで保存した色や、写真から保存した色がここに表示されます。</string>
+    <plurals name="history_count">
+        <item quantity="other">%1$d色</item>
+    </plurals>
+    <string name="history_export">書き出し</string>
+    <string name="history_all">すべての色</string>
+    <string name="export_done">色を書き出しました</string>
+    <string name="export_failed">ファイルを書き込めませんでした</string>
+    <string name="detail_and_hex">%1$s · %2$s</string>
+
+    <!-- Color names. Whole names per shade, so each language can write them its own way. -->
+    <string name="color_black_light">明るい黒</string>
+    <string name="color_black">黒</string>
+    <string name="color_black_dark">真っ黒</string>
+    <string name="color_white_light">真っ白</string>
+    <string name="color_white">白</string>
+    <string name="color_white_dark">くすんだ白</string>
+    <string name="color_gray_light">明るい灰色</string>
+    <string name="color_gray">灰色</string>
+    <string name="color_gray_dark">濃い灰色</string>
+    <string name="color_red_light">明るい赤</string>
+    <string name="color_red">赤</string>
+    <string name="color_red_dark">濃い赤</string>
+    <string name="color_orange_light">明るいオレンジ</string>
+    <string name="color_orange">オレンジ</string>
+    <string name="color_orange_dark">濃いオレンジ</string>
+    <string name="color_yellow_light">明るい黄色</string>
+    <string name="color_yellow">黄色</string>
+    <string name="color_yellow_dark">濃い黄色</string>
+    <string name="color_green_light">明るい緑</string>
+    <string name="color_green">緑</string>
+    <string name="color_green_dark">濃い緑</string>
+    <string name="color_blue_green_light">明るい青緑</string>
+    <string name="color_blue_green">青緑</string>
+    <string name="color_blue_green_dark">濃い青緑</string>
+    <string name="color_blue_light">水色</string>
+    <string name="color_blue">青</string>
+    <string name="color_blue_dark">濃い青</string>
+    <string name="color_purple_light">明るい紫</string>
+    <string name="color_purple">紫</string>
+    <string name="color_purple_dark">濃い紫</string>
+    <string name="color_pink_light">明るいピンク</string>
+    <string name="color_pink">ピンク</string>
+    <string name="color_pink_dark">濃いピンク</string>
+    <string name="color_brown_light">明るい茶色</string>
+    <string name="color_brown">茶色</string>
+    <string name="color_brown_dark">こげ茶色</string>
+    <string name="color_reddish_brown">赤茶色</string>
+    <!-- A color family used inside a sentence: "A is red. B is green." -->
+    <string name="family_black">黒</string>
+    <string name="family_white">白</string>
+    <string name="family_gray">灰色</string>
+    <string name="family_red">赤</string>
+    <string name="family_orange">オレンジ</string>
+    <string name="family_yellow">黄色</string>
+    <string name="family_green">緑</string>
+    <string name="family_blue_green">青緑</string>
+    <string name="family_blue">青</string>
+    <string name="family_purple">紫</string>
+    <string name="family_pink">ピンク</string>
+    <string name="family_brown">茶色</string>
+    <!-- How B differs from A. %1$s and %2$s are family names from family_*. -->
+    <string name="cmp_same">AとBは同じ色に見えます。</string>
+    <string name="cmp_close_border">どちらも%1$sに近い色です。Bは少し%2$s寄りです。</string>
+    <string name="cmp_different">Aは%1$s、Bは%2$sです。</string>
+    <string name="cmp_same_family_tint">どちらも%1$sですが、色味が少し違います。</string>
+    <string name="cmp_same_family">どちらも%1$sです。</string>
+    <string name="cmp_change_vivid">Bのほうが鮮やかです。</string>
+    <string name="cmp_change_duller">Bのほうがくすんでいます。</string>
+    <string name="cmp_change_little_lighter">Bは少し明るいです。</string>
+    <string name="cmp_change_little_lighter_vivid">Bは少し明るく、より鮮やかです。</string>
+    <string name="cmp_change_little_lighter_duller">Bは少し明るく、よりくすんでいます。</string>
+    <string name="cmp_change_little_darker">Bは少し暗いです。</string>
+    <string name="cmp_change_little_darker_vivid">Bは少し暗く、より鮮やかです。</string>
+    <string name="cmp_change_little_darker_duller">Bは少し暗く、よりくすんでいます。</string>
+    <string name="cmp_change_much_lighter">Bはかなり明るいです。</string>
+    <string name="cmp_change_much_lighter_vivid">Bはかなり明るく、より鮮やかです。</string>
+    <string name="cmp_change_much_lighter_duller">Bはかなり明るく、よりくすんでいます。</string>
+    <string name="cmp_change_much_darker">Bはかなり暗いです。</string>
+    <string name="cmp_change_much_darker_vivid">Bはかなり暗く、より鮮やかです。</string>
+    <string name="cmp_change_much_darker_duller">Bはかなり暗く、よりくすんでいます。</string>
+
+    <!-- Time a color was saved -->
+    <string name="time_just_now">たった今</string>
+    <string name="time_minutes_ago">%1$d分前</string>
+    <string name="time_hours_ago">%1$d時間前</string>
+    <string name="time_yesterday">昨日</string>
+
+    <!-- Language -->
+    <string name="settings_language">言語</string>
+    <string name="language_system">スマホの言語</string>
+    <string name="language_dialog_title">アプリの言語</string>
+</resources>

@@ -15,12 +15,37 @@ enum class Verdict(val label: String) {
     DIFFERENT("Different"),
 }
 
+/** How much lighter or darker B is than A. */
+enum class LightnessChange { NONE, LITTLE_LIGHTER, MUCH_LIGHTER, LITTLE_DARKER, MUCH_DARKER }
+
+/** Whether B is more vivid or duller than A. */
+enum class ChromaChange { NONE, MORE_VIVID, DULLER }
+
+/** Which sentence describes the pair; the app turns it into words in the user's language. */
+enum class ExplanationKind {
+    /** "A and B look the same." */
+    SAME,
+    /** Close, but on either side of a family border: "Both are close to gray. B leans toward blue". */
+    CLOSE_ACROSS_BORDER,
+    /** Different families: "A is red. B is green". */
+    DIFFERENT_FAMILIES,
+    /** Same family, only the tint differs: "Both are blue, with a slightly different tint." */
+    SAME_FAMILY_TINT,
+    /** Same family, B lighter, darker, more vivid or duller: "Both are blue. B is a little lighter." */
+    SAME_FAMILY_CHANGED,
+}
+
 data class Comparison(
     val verdict: Verdict,
     val deltaE: Double,
     val sameFamily: Boolean,
-    /** Plain sentence about how B differs from A, for example "B is green and a little lighter". */
+    /** English sentence about how B differs from A, for example "B is green and a little lighter". */
     val explanation: String,
+    val kind: ExplanationKind = ExplanationKind.SAME,
+    val familyA: ColorFamily = ColorFamily.GRAY,
+    val familyB: ColorFamily = ColorFamily.GRAY,
+    val lightness: LightnessChange = LightnessChange.NONE,
+    val chroma: ChromaChange = ChromaChange.NONE,
 )
 
 object ColorDifference {
@@ -98,7 +123,31 @@ object ColorDifference {
         val nameA = ColorNamer.name(a)
         val nameB = ColorNamer.name(b)
         val sameFamily = nameA.family == nameB.family
-        return Comparison(verdict, deltaE, sameFamily, explain(verdict, nameA, nameB, a, b))
+        val la = ColorMath.toOklch(a)
+        val lb = ColorMath.toOklch(b)
+        val dL = lb.l - la.l
+        val lightness = when {
+            abs(dL) < 0.04 -> LightnessChange.NONE
+            dL > 0 -> if (dL >= 0.15) LightnessChange.MUCH_LIGHTER else LightnessChange.LITTLE_LIGHTER
+            else -> if (-dL >= 0.15) LightnessChange.MUCH_DARKER else LightnessChange.LITTLE_DARKER
+        }
+        val dC = lb.c - la.c
+        val chroma = when {
+            abs(dC) < 0.03 -> ChromaChange.NONE
+            dC > 0 -> ChromaChange.MORE_VIVID
+            else -> ChromaChange.DULLER
+        }
+        val kind = when {
+            verdict == Verdict.SAME -> ExplanationKind.SAME
+            !sameFamily && verdict == Verdict.CLOSE -> ExplanationKind.CLOSE_ACROSS_BORDER
+            !sameFamily -> ExplanationKind.DIFFERENT_FAMILIES
+            lightness == LightnessChange.NONE && chroma == ChromaChange.NONE -> ExplanationKind.SAME_FAMILY_TINT
+            else -> ExplanationKind.SAME_FAMILY_CHANGED
+        }
+        return Comparison(
+            verdict, deltaE, sameFamily, explain(verdict, nameA, nameB, a, b),
+            kind, nameA.family, nameB.family, lightness, chroma,
+        )
     }
 
     private fun explain(verdict: Verdict, nameA: ColorName, nameB: ColorName, a: Rgb, b: Rgb): String {

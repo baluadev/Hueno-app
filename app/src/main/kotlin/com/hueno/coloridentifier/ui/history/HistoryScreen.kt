@@ -1,6 +1,7 @@
 package com.hueno.coloridentifier.ui.history
 
 import androidx.compose.foundation.background
+import com.hueno.coloridentifier.ui.localizedPlain
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -195,7 +196,7 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
         }
         Column(Modifier.weight(1f)) {
             Text(
-                capture.title,
+                capture.label ?: capture.name.localizedPlain(),
                 color = HuenoColors.Text,
                 fontSize = HuenoType.Body,
                 fontWeight = FontWeight.SemiBold,
@@ -203,7 +204,7 @@ private fun CaptureRow(capture: Capture, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
             // With a custom name on top, the line below carries the plain color name instead.
-            val second = if (capture.label != null) capture.name.plain else capture.name.detail
+            val second = if (capture.label != null) capture.name.localizedPlain() else capture.name.detail
             Text(
                 stringResource(R.string.detail_and_hex, second, rgb.hex),
                 color = HuenoColors.TextMuted,

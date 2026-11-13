@@ -1,6 +1,7 @@
 package com.hueno.coloridentifier.ui.result
 
 import android.widget.Toast
+import com.hueno.coloridentifier.ui.localizedPlain
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -128,10 +129,11 @@ fun ResultScreen(
                 }
             }
 
+            val plainName = capture.name.localizedPlain()
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        capture.name.plain,
+                        plainName,
                         color = HuenoColors.Text,
                         fontSize = HuenoType.Display,
                         lineHeight = HuenoType.DisplayLine,
@@ -151,7 +153,7 @@ fun ResultScreen(
                         .clip(CircleShape)
                         .background(HuenoColors.Surface)
                         .border(1.dp, HuenoColors.Line, CircleShape)
-                        .clickable(role = Role.Button) { speaker.say(capture.name.plain) }
+                        .clickable(role = Role.Button) { speaker.say(plainName) }
                         .semantics { contentDescription = speak },
                     contentAlignment = Alignment.Center,
                 ) { Icon(HuenoIcons.Speak, contentDescription = null, tint = HuenoColors.Text) }

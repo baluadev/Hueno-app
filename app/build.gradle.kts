@@ -84,6 +84,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Lists the languages in res/ for Android 13's per-app language setting. The default (values/)
+    // is English, as declared in res/resources.properties.
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -108,6 +114,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(platform(libs.androidx.compose.bom))

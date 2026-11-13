@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -71,7 +72,7 @@ private fun HuenoAppContent(viewModel: HuenoViewModel) {
     val dark = tab == Tab.CAMERA || systemDark
     val speaker = rememberSpeaker()
     val money by viewModel.money.collectAsStateWithLifecycle()
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
     val bannerUnitId = if (money.showBanners) viewModel.bannerUnitId else null
     // The detail, settings and Pro screens follow the system setting and cover the whole window.
     val overlayOpen = viewModel.openCapture != null || viewModel.proScreen != null || viewModel.showSettings

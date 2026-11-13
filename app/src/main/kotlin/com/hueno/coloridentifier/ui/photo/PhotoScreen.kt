@@ -1,6 +1,7 @@
 package com.hueno.coloridentifier.ui.photo
 
 import android.content.Context
+import com.hueno.coloridentifier.ui.localizedPlain
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -275,7 +276,7 @@ fun PhotoScreen(onSave: (Rgb, Bitmap?) -> Unit) {
                     .border(2.dp, HuenoColors.Text, HuenoShapes.Medium),
             )
             Column(Modifier.weight(1f)) {
-                Text(name.plain, color = HuenoColors.Text, fontSize = HuenoType.Display, lineHeight = HuenoType.DisplayLine, fontWeight = FontWeight.Bold)
+                Text(name.localizedPlain(), color = HuenoColors.Text, fontSize = HuenoType.Display, lineHeight = HuenoType.DisplayLine, fontWeight = FontWeight.Bold)
                 Text(
                     stringResource(R.string.detail_and_hex, name.detail, rgb.hex),
                     color = HuenoColors.TextMuted,

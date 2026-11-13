@@ -15,28 +15,31 @@ import java.util.Locale
  * Reads color names aloud with the system text-to-speech engine.
  *
  * Never silent without a reason: text asked for before the engine is ready is spoken once it is,
- * and when the phone cannot speak English the user is told so with a toast.
+ * and when the phone cannot speak the app language the user is told so with a toast. Speaks in the
+ * app language (taken from the activity context, which follows the in-app language choice), and
+ * falls back to English when the engine has no voice for it.
  */
 class Speaker(context: Context) {
 
     private enum class Status { STARTING, READY, UNAVAILABLE }
 
     private val appContext = context.applicationContext
+    private val locale: Locale = context.resources.configuration.locales[0] ?: Locale.US
 
     // Written on the TTS callback thread, read on the main thread.
     @Volatile private var status = Status.STARTING
     @Volatile private var waiting: String? = null
 
     private val tts: TextToSpeech = TextToSpeech(appContext) { result ->
-        status = if (result == TextToSpeech.SUCCESS && setEnglish()) Status.READY else Status.UNAVAILABLE
+        status = if (result == TextToSpeech.SUCCESS && (setLanguage(locale) || setLanguage(Locale.US))) Status.READY else Status.UNAVAILABLE
         val queued = waiting
         waiting = null
         if (queued != null) say(queued)
     }
 
-    /** False when the engine has no English voice at all. */
-    private fun setEnglish(): Boolean {
-        val outcome = runCatching { tts.setLanguage(Locale.US) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
+    /** False when the engine has no voice at all for [language]. */
+    private fun setLanguage(language: Locale): Boolean {
+        val outcome = runCatching { tts.setLanguage(language) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
         return outcome != TextToSpeech.LANG_MISSING_DATA && outcome != TextToSpeech.LANG_NOT_SUPPORTED
     }
 

@@ -1,6 +1,8 @@
 <resources>
-    <!-- The app theme once the first frame is drawn. Screens are styled in Compose. -->
-    <style name="Theme.Hueno" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- The app theme once the first frame is drawn. Screens are styled in Compose. AppCompat,
+         because the activity is an AppCompatActivity so the in-app language works on every
+         Android version. -->
+    <style name="Theme.Hueno" parent="Theme.AppCompat.Light.NoActionBar" />
 
     <!-- What the system shows while the app starts: the mark on the dark tile color. The animated
          intro in SplashOverlay picks up from exactly this picture. -->
